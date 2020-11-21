@@ -177,6 +177,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
             return 1;
           }
         }
+        //ihiohih
         POINT coordinates[2];
         coordinates[0]=MainMas[Mainsize].MassCor[MainMas[Mainsize].size].xy;
         coordinates[1]=MainMas[Mainsize].MassCor[MainMas[Mainsize].size].x1y1;
