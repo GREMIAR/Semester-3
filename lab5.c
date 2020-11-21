@@ -4,10 +4,8 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
 struct saveCor
 {
-  int x;
-  int y;
-  int x1;
-  int y1;
+  POINT xy;
+  POINT x1y1;
 };
 
 struct MainPoly
@@ -101,16 +99,15 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
       {
         for(int i=0;i<14;i++)
         {
-            ShowWindow(HWNDMas[i],SW_HIDE);
+          ShowWindow(HWNDMas[i],SW_HIDE);
         }
-        MainMas[Mainsize].MassCor[MainMas[Mainsize].size].x=LOWORD(lParam);
-        MainMas[Mainsize].MassCor[MainMas[Mainsize].size].y=HIWORD(lParam);
+        MainMas[Mainsize].MassCor[MainMas[Mainsize].size].xy.x=LOWORD(lParam);
+        MainMas[Mainsize].MassCor[MainMas[Mainsize].size].xy.y=HIWORD(lParam);
         MainMas[Mainsize].color=GetColor();
       }
       else
       {
-        MainMas[Mainsize].MassCor[MainMas[Mainsize].size].x=MainMas[Mainsize].MassCor[MainMas[Mainsize].size-1].x1;
-        MainMas[Mainsize].MassCor[MainMas[Mainsize].size].y=MainMas[Mainsize].MassCor[MainMas[Mainsize].size-1].y1;
+        MainMas[Mainsize].MassCor[MainMas[Mainsize].size].xy=MainMas[Mainsize].MassCor[MainMas[Mainsize].size-1].x1y1;
       }
       Condition=Three;
       break;
@@ -119,22 +116,18 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
     {
       Condition=Two;
       POINT c[4];
-      c[0].x=-MainMas[Mainsize].MassCor[MainMas[Mainsize].size].x;
-      c[0].y=-MainMas[Mainsize].MassCor[MainMas[Mainsize].size].y;
-      c[1].x=-MainMas[Mainsize].MassCor[MainMas[Mainsize].size].x1;
-      c[1].y=-MainMas[Mainsize].MassCor[MainMas[Mainsize].size].y1;
+      c[0]=MainMas[Mainsize].MassCor[MainMas[Mainsize].size].xy;
+      c[1]=MainMas[Mainsize].MassCor[MainMas[Mainsize].size].x1y1;
       for(int i=0;i<MainMas[Mainsize].size-1;i++)
       {
-        c[2].x=-MainMas[Mainsize].MassCor[i].x;
-        c[2].y=-MainMas[Mainsize].MassCor[i].y;
-        c[3].x=-MainMas[Mainsize].MassCor[i].x1;
-        c[3].y=-MainMas[Mainsize].MassCor[i].y1;
+        c[2]=MainMas[Mainsize].MassCor[i].xy;
+        c[3]=MainMas[Mainsize].MassCor[i].x1y1;
         if(intersection(c)==TRUE)
         {
           MessageBox(hwnd,"You crossed the line","Error", MB_OK|MB_APPLMODAL);
           MainMas[Mainsize].size--;
           MainMas[Mainsize].size++;
-          Condition=Three;
+          Condition=Two;
           return 1;
         }
       }
@@ -143,21 +136,21 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
     }
     case WM_MOUSEMOVE:
     {
-      if(Condition==Three)
-      {
-        MainMas[Mainsize].MassCor[MainMas[Mainsize].size].x1=LOWORD(lParam);
-        MainMas[Mainsize].MassCor[MainMas[Mainsize].size].y1=HIWORD(lParam);
-      }
       if(Condition==One)
       {
-          RECT rcClientRect;
-          GetClientRect(hwnd, &rcClientRect);
-          rcClientRect.top=60;
-          InvalidateRect(hwnd,&rcClientRect,1);
+        RECT rcClientRect;
+        GetClientRect(hwnd, &rcClientRect);
+        rcClientRect.top=60;
+        InvalidateRect(hwnd,&rcClientRect,1);
       }
       else
       {
-          InvalidateRect(hwnd,NULL,1);
+        if(Condition==Three)
+        {
+          MainMas[Mainsize].MassCor[MainMas[Mainsize].size].x1y1.x=LOWORD(lParam);
+          MainMas[Mainsize].MassCor[MainMas[Mainsize].size].x1y1.y=HIWORD(lParam);
+        }
+        InvalidateRect(hwnd,NULL,1);
       }
       
       break;
@@ -166,43 +159,29 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
     {
       if (Condition==Two)
       {
-        MainMas[Mainsize].MassCor[MainMas[Mainsize].size].x=MainMas[Mainsize].MassCor[MainMas[Mainsize].size-1].x1;
-        MainMas[Mainsize].MassCor[MainMas[Mainsize].size].y=MainMas[Mainsize].MassCor[MainMas[Mainsize].size-1].y1;
-        MainMas[Mainsize].MassCor[MainMas[Mainsize].size].x1=MainMas[Mainsize].MassCor[0].x;
-        MainMas[Mainsize].MassCor[MainMas[Mainsize].size].y1=MainMas[Mainsize].MassCor[0].y;
+        MainMas[Mainsize].MassCor[MainMas[Mainsize].size].xy=MainMas[Mainsize].MassCor[MainMas[Mainsize].size-1].x1y1;
+        MainMas[Mainsize].MassCor[MainMas[Mainsize].size].x1y1=MainMas[Mainsize].MassCor[0].xy;
         POINT c[4];
-        c[0].x=MainMas[Mainsize].MassCor[MainMas[Mainsize].size].x;
-        c[0].y=MainMas[Mainsize].MassCor[MainMas[Mainsize].size].y;
-        c[1].x=MainMas[Mainsize].MassCor[MainMas[Mainsize].size].x1;
-        c[1].y=MainMas[Mainsize].MassCor[MainMas[Mainsize].size].y1;
+        c[0]=MainMas[Mainsize].MassCor[MainMas[Mainsize].size].xy;
+        c[1]=MainMas[Mainsize].MassCor[MainMas[Mainsize].size].x1y1;
         for(int i=1;i<MainMas[Mainsize].size-1;i++)
         {
-          c[2].x=MainMas[Mainsize].MassCor[i].x;
-          c[2].y=MainMas[Mainsize].MassCor[i].y;
-          c[3].x=MainMas[Mainsize].MassCor[i].x1;
-          c[3].y=MainMas[Mainsize].MassCor[i].y1;
+          c[2]=MainMas[Mainsize].MassCor[i].xy;
+          c[3]=MainMas[Mainsize].MassCor[i].x1y1;
           if(intersection(c)==TRUE)
           {
-            MessageBox(hwnd,"You crossed the line\nCan't finish","Error2", MB_OK|MB_APPLMODAL);
+            MessageBox(hwnd,"You crossed the line\nCan't finish","Error", MB_OK|MB_APPLMODAL);
             MainMas[Mainsize].size--;
             MainMas[Mainsize].size++;
-            Condition=Three;
+            Condition=Two;
             return 1;
           }
         }
         POINT coordinates[2];
-        coordinates[0].x=MainMas[Mainsize].MassCor[MainMas[Mainsize].size].x;
-        coordinates[0].y=MainMas[Mainsize].MassCor[MainMas[Mainsize].size].y;
-        coordinates[1].x=MainMas[Mainsize].MassCor[MainMas[Mainsize].size].x1;
-        coordinates[1].y=MainMas[Mainsize].MassCor[MainMas[Mainsize].size].y1;
+        coordinates[0]=MainMas[Mainsize].MassCor[MainMas[Mainsize].size].xy;
+        coordinates[1]=MainMas[Mainsize].MassCor[MainMas[Mainsize].size].x1y1;
         HDC hdc = GetDC (hwnd);
         updateColor(hdc,MainMas[Mainsize].color,GetColorIn());
-        POINT ptPoints[MainMas[Mainsize].size+1];
-        for(int i=0;i<MainMas[Mainsize].size+1;i++)
-        {
-          ptPoints[i].x=MainMas[Mainsize].MassCor[i].x;
-          ptPoints[i].y=MainMas[Mainsize].MassCor[i].y;
-        }
         DrawLine(hdc,coordinates);
         DeleteObject(hdc);
         Mainsize++;
@@ -215,21 +194,17 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
       else if(Condition==One)
       {
         int colper=0;
-        int x = LOWORD(lParam);
-        int y = HIWORD(lParam);
         POINT c[4];
-        c[0].x=x;
-        c[0].y=y;
+        c[0].x=LOWORD(lParam);
+        c[0].y=HIWORD(lParam);
         c[1].x=2000;
         c[1].y=2000;
         for (int f=0;f<Mainsize;f++)
         {
           for(int i=0;i<MainMas[f].size+1;i++)
           {
-            c[2].x=MainMas[f].MassCor[i].x;
-            c[2].y=MainMas[f].MassCor[i].y;
-            c[3].x=MainMas[f].MassCor[i].x1;
-            c[3].y=MainMas[f].MassCor[i].y1;
+            c[2]=MainMas[f].MassCor[i].xy;
+            c[3]=MainMas[f].MassCor[i].x1y1;
             if(intersection(c)==TRUE)
             {
               colper+=1;
@@ -246,10 +221,8 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
           {
             for(int i=0;i<MainMas[f].size+1;i++)
             {
-              c[2].x=MainMas[f].MassCor[i].x;
-              c[2].y=MainMas[f].MassCor[i].y;
-              c[3].x=MainMas[f].MassCor[i].x1;
-              c[3].y=MainMas[f].MassCor[i].y1;
+              c[2]=MainMas[f].MassCor[i].xy;
+              c[3]=MainMas[f].MassCor[i].x1y1;
               if(intersection(c)==TRUE)
               {
                 colper+=1;
@@ -268,17 +241,16 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
           POINT ptPoints[MainMas[f].size+1];
           for(int a=0;a<MainMas[f].size+1;a++)
           {
-            ptPoints[a].x=MainMas[f].MassCor[a].x;
-            ptPoints[a].y=MainMas[f].MassCor[a].y;
+            ptPoints[a]=MainMas[f].MassCor[a].xy;
           }
           Polygon(hdc, ptPoints,sizeof ptPoints / sizeof ptPoints[0]);
-          Drawer(hdc,x,y,MainMas[f].color,MainMas[f].colorIn);
+          Drawer(hdc,c[0].x,c[0].y,MainMas[f].color,MainMas[f].colorIn);
           Condition=One;
           DeleteObject(hdc);
         }
         else
         {
-          MessageBox(hwnd,"You didn't get anywhere","Error3", MB_OK|MB_APPLMODAL);
+          MessageBox(hwnd,"You didn't get anywhere","Error", MB_OK|MB_APPLMODAL);
         }
       }
       break;
@@ -300,15 +272,12 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
         {
           for(int i=0;i<MainMas[f].size+1;i++)
           {
-            coordinates[0].x=MainMas[f].MassCor[i].x;
-            coordinates[0].y=MainMas[f].MassCor[i].y;
-            coordinates[1].x=MainMas[f].MassCor[i].x1;
-            coordinates[1].y=MainMas[f].MassCor[i].y1;
+            coordinates[0]=MainMas[f].MassCor[i].xy;
+            coordinates[1]=MainMas[f].MassCor[i].x1y1;
             updateColor(memDC,MainMas[f].color,MainMas[f].colorIn);
             if (i!=0)
             {
-              coordinates[0].x=MainMas[f].MassCor[i-1].x1;
-              coordinates[0].y=MainMas[f].MassCor[i-1].y1;
+              coordinates[0]=MainMas[f].MassCor[i-1].x1y1;
               DrawLine(memDC,coordinates);
             }
             else
@@ -321,8 +290,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
             POINT ptPoints[MainMas[f].size+1];
             for(int a=0;a<MainMas[f].size+1;a++)
             {
-              ptPoints[a].x=MainMas[f].MassCor[a].x;
-              ptPoints[a].y=MainMas[f].MassCor[a].y;
+              ptPoints[a]=MainMas[f].MassCor[a].xy;
             }
             Polygon(memDC, ptPoints,sizeof ptPoints / sizeof ptPoints[0]);
           }
