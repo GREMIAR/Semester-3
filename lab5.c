@@ -390,5 +390,5 @@ void Drawer(HDC hdc,int x,int y,COLORREF GetColor,COLORREF GetColorIn)
   Drawer(hdc,x,y-1,GetColor,GetColorIn);
   Drawer(hdc,x-1,y,GetColor,GetColorIn);
   Drawer(hdc,x,y+1,GetColor,GetColorIn);
-  Drawer(hdc,x+1,y,GetColor,GetColorIn);
+  Drawer(hdc,x+1,y,GetColor,GetColorIn);//huita
 }
