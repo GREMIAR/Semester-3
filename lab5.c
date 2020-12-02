@@ -24,7 +24,7 @@ HPEN pen;
 HBRUSH brush;
 int Mainsize;
 HWND HWNDMas[14];
-void Drawer(HDC hdc,int x,int y,COLORREF GetColor,COLORREF GetColorIn, HWND hwnd, int f);
+void Drawer(HDC hdc,COLORREF GetColor,HWND hwnd, int f);
 void FreeTool();
 void DrawLine(HDC hdc,POINT coor[2]);
 void updateColor(HDC hdc,COLORREF Color,COLORREF ColorIn);
@@ -245,7 +245,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
             ptPoints[a]=MainMas[f].MassCor[a].xy;
           }
           Polygon(hdc, ptPoints,sizeof ptPoints / sizeof ptPoints[0]);
-          Drawer(hdc,c[0].x,c[0].y,MainMas[f].color,MainMas[f].colorIn, hwnd,f);
+          Drawer(hdc,MainMas[f].colorIn, hwnd,f);
           Condition=One;
           DeleteObject(hdc);
         }
@@ -379,41 +379,36 @@ void updateColor(HDC hdc,COLORREF Color,COLORREF ColorIn)
   SelectObject(hdc, brush);
 }
 
-void Drawer(HDC hdc,int x,int y,COLORREF GetColor,COLORREF GetColorIn, HWND hwnd, int f)
+void Drawer(HDC hdc,COLORREF GetColor,HWND hwnd, int f)
 {
-  POINT c[4];
-  c[1].x=3000;
-  c[1].y=3000;
-  
   int left,right,top,bot;
   left = MainMas[f].MassCor[0].xy.x;
   right = MainMas[f].MassCor[0].xy.x;
   top = MainMas[f].MassCor[0].xy.y;
   bot = MainMas[f].MassCor[0].xy.y;
-  printf("\ttop:%d\nleft:%d\tright:%d,\n\tbot:%d\n\n", top,left,right,bot);
-  for (int i2=0; i2 <= MainMas[f].size; i2++)
+  for (int i=0; i <= MainMas[f].size; i++)
   {
-    printf("\ttop:%d\nleft:%d\tright:%d,\n\tbot:%d\n\n", top,left,right,bot);
-    if (MainMas[f].MassCor[i2].xy.x < left) left = MainMas[f].MassCor[i2].xy.x;
-    if (MainMas[f].MassCor[i2].xy.x > right) right = MainMas[f].MassCor[i2].xy.x;
-    if (MainMas[f].MassCor[i2].xy.y < top) top = MainMas[f].MassCor[i2].xy.y;
-    if (MainMas[f].MassCor[i2].xy.y > bot) bot = MainMas[f].MassCor[i2].xy.y;
+    if (MainMas[f].MassCor[i].xy.x < left) left = MainMas[f].MassCor[i].xy.x;
+    if (MainMas[f].MassCor[i].xy.x > right) right = MainMas[f].MassCor[i].xy.x;
+    if (MainMas[f].MassCor[i].xy.y < top) top = MainMas[f].MassCor[i].xy.y;
+    if (MainMas[f].MassCor[i].xy.y > bot) bot = MainMas[f].MassCor[i].xy.y;
   }
-  printf("\ttop:%d\nleft:%d\tright:%d,\n\tbot:%d\n\n", top,left,right,bot);
-  //return;
-  POINT point;
-  point.x = left;
-  point.y = top;
+  RECT rcClientRect;
+  GetClientRect(hwnd, &rcClientRect);
+  POINT c[4];
+  c[0].x=left;
+  c[0].y=top;
+  c[1].x=rcClientRect.right+1;
+  c[1].y=rcClientRect.bottom+1;
   for (int i1 = left; i1 < right; i1++)
   {
     for (int j1 = top; j1 < bot; j1++)
     {
       int colper=0;
+      c[0].x=i1;
+      c[0].y=j1;
       
-      c[0].x=point.x;
-      c[0].y=point.y;
-      
-      for(int i=0;i<=MainMas[f].size+1;i++)
+      for(int i=0;i<MainMas[f].size+1;i++)
       {
         c[2]=MainMas[f].MassCor[i].xy;
         c[3]=MainMas[f].MassCor[i].x1y1;
@@ -422,14 +417,10 @@ void Drawer(HDC hdc,int x,int y,COLORREF GetColor,COLORREF GetColorIn, HWND hwnd
           colper+=1;
         }
       }
-      if (colper%2!=0) // if vnutri
+      if (colper%2!=0) 
       {
-        SetPixel(hdc, point.x, point.y, GetColor);
+        SetPixel(hdc, i1, j1, GetColor);
       }
-      point.x=point.x+1;
-      printf("x=%d,   y=%d   success\n",point.x,point.y);
     }
-    point.x=left;
-    point.y=point.y+1;
   }
 }
