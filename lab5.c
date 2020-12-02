@@ -101,42 +101,73 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
         {
           ShowWindow(HWNDMas[i],SW_HIDE);
         }
+        UpdateWindow(hwnd);
         MainMas[Mainsize].MassCor[MainMas[Mainsize].size].xy.x=LOWORD(lParam);
         MainMas[Mainsize].MassCor[MainMas[Mainsize].size].xy.y=HIWORD(lParam);
+        MainMas[Mainsize].MassCor[MainMas[Mainsize].size].x1y1.x=0;
+        MainMas[Mainsize].MassCor[MainMas[Mainsize].size].x1y1.y=0;
         MainMas[Mainsize].color=GetColor();
+        Condition=Two;
+        HDC hdc = GetDC (hwnd);
+        updateColor(hdc,MainMas[Mainsize].color,GetColorIn());
+        MoveToEx(hdc, MainMas[Mainsize].MassCor[MainMas[Mainsize].size].xy.x, MainMas[Mainsize].MassCor[MainMas[Mainsize].size].xy.y, NULL);
+        LineTo(hdc, MainMas[Mainsize].MassCor[MainMas[Mainsize].size].xy.x, MainMas[Mainsize].MassCor[MainMas[Mainsize].size].xy.y);
+        DeleteObject(hdc);
       }
-      else
+      else if(Condition==Two)
       {
+        if(MainMas[Mainsize].size-1>=0)
+        {
         MainMas[Mainsize].MassCor[MainMas[Mainsize].size].xy=MainMas[Mainsize].MassCor[MainMas[Mainsize].size-1].x1y1;
+        Condition=Three;
+        }
+        Condition=Three;
       }
-      Condition=Three;
       break;
     }
     case WM_LBUTTONUP:
     {
-      Condition=Two;
-      POINT c[4];
-      c[0]=MainMas[Mainsize].MassCor[MainMas[Mainsize].size].xy;
-      c[1]=MainMas[Mainsize].MassCor[MainMas[Mainsize].size].x1y1;
-      for(int i=0;i<MainMas[Mainsize].size-1;i++)
+      if (Condition==Three)
       {
-        c[2]=MainMas[Mainsize].MassCor[i].xy;
-        c[3]=MainMas[Mainsize].MassCor[i].x1y1;
-        if(intersection(c)==TRUE)
+        Condition=Two;
+        POINT c[4];
+        c[0]=MainMas[Mainsize].MassCor[MainMas[Mainsize].size].xy;
+        MainMas[Mainsize].MassCor[MainMas[Mainsize].size].x1y1.x=LOWORD(lParam);
+        MainMas[Mainsize].MassCor[MainMas[Mainsize].size].x1y1.y=HIWORD(lParam);
+        c[1]=MainMas[Mainsize].MassCor[MainMas[Mainsize].size].x1y1;
+        for(int i=0;i<MainMas[Mainsize].size-1;i++)
         {
-          MessageBox(hwnd,"You crossed the line","Error", MB_OK|MB_APPLMODAL);
-          MainMas[Mainsize].size--;
-          MainMas[Mainsize].size++;
-          Condition=Two;
-          InvalidateRect(hwnd,NULL,1);
-          return 1;
+          c[2]=MainMas[Mainsize].MassCor[i].xy;
+          c[3]=MainMas[Mainsize].MassCor[i].x1y1;
+          if(intersection(c)==TRUE)
+          {
+            MessageBox(hwnd,"You crossed the line","Error", MB_OK|MB_APPLMODAL);
+            MainMas[Mainsize].size--;
+            MainMas[Mainsize].size++;
+            InvalidateRect(hwnd,NULL,1);
+            return 1;
+          }
         }
+        if(MainMas[Mainsize].MassCor[MainMas[Mainsize].size].xy.x==MainMas[Mainsize].MassCor[MainMas[Mainsize].size].x1y1.x||MainMas[Mainsize].MassCor[MainMas[Mainsize].size].xy.y==MainMas[Mainsize].MassCor[MainMas[Mainsize].size].x1y1.y)
+        {
+            MessageBox(hwnd,"You crossed the line","Error", MB_OK|MB_APPLMODAL);
+            MainMas[Mainsize].size--;
+            MainMas[Mainsize].size++;
+            InvalidateRect(hwnd,NULL,1);
+            return 1;
+        }
+        HDC hdc = GetDC (hwnd);
+        updateColor(hdc,MainMas[Mainsize].color,GetColorIn());
+        MoveToEx(hdc, MainMas[Mainsize].MassCor[MainMas[Mainsize].size].xy.x, MainMas[Mainsize].MassCor[MainMas[Mainsize].size].xy.y, NULL);
+        LineTo(hdc, MainMas[Mainsize].MassCor[MainMas[Mainsize].size].x1y1.x, MainMas[Mainsize].MassCor[MainMas[Mainsize].size].x1y1.y);
+        MainMas[Mainsize].size++;
+        DeleteObject(hdc);
       }
-      MainMas[Mainsize].size++;
       break;
     }
     case WM_MOUSEMOVE:
     {
+      printf("%d",Condition+1);
       if(Condition==One)
       {
         RECT rcClientRect;
