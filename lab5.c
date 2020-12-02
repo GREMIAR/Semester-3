@@ -34,13 +34,13 @@ void RegClass(WNDPROC,LPCTSTR);
 BOOL intersection(POINT c[4]);
 
 enum stateDraw{
-  One,
-  Two,
-  Three,
-  Four,
-  Five,
-  Six,
-  Seven
+  One,//Главное окно отображено
+  Two,//Добавлен элемент фигуры
+  Three,//Проверка на пересечение сторон(ЛКМ)
+  Four,//Отображено окно с ошибкой
+  Five,//Проверка на пересечение сторон(ПКМ)
+  Six,//Проверка курсор внутри или снаружи
+  Seven//Отображено окно с ошибкой
 };
 
 enum stateDraw Condition;
@@ -389,9 +389,9 @@ void Drawer(HDC hdc,COLORREF GetColor,HWND hwnd, int f)
   for (int i=0; i <= MainMas[f].size; i++)
   {
     if (MainMas[f].MassCor[i].xy.x < left) left = MainMas[f].MassCor[i].xy.x;
-    if (MainMas[f].MassCor[i].xy.x > right) right = MainMas[f].MassCor[i].xy.x;
+    else if (MainMas[f].MassCor[i].xy.x > right) right = MainMas[f].MassCor[i].xy.x;
     if (MainMas[f].MassCor[i].xy.y < top) top = MainMas[f].MassCor[i].xy.y;
-    if (MainMas[f].MassCor[i].xy.y > bot) bot = MainMas[f].MassCor[i].xy.y;
+    else if (MainMas[f].MassCor[i].xy.y > bot) bot = MainMas[f].MassCor[i].xy.y;
   }
   RECT rcClientRect;
   GetClientRect(hwnd, &rcClientRect);
@@ -407,7 +407,6 @@ void Drawer(HDC hdc,COLORREF GetColor,HWND hwnd, int f)
       int colper=0;
       c[0].x=i1;
       c[0].y=j1;
-      
       for(int i=0;i<MainMas[f].size+1;i++)
       {
         c[2]=MainMas[f].MassCor[i].xy;
