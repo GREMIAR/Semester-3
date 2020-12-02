@@ -24,7 +24,7 @@ HPEN pen;
 HBRUSH brush;
 int Mainsize;
 HWND HWNDMas[14];
-void Drawer(HDC hdc,int x,int y,COLORREF GetColor,COLORREF GetColorIn);
+void Drawer(HDC hdc,int x,int y,COLORREF GetColor,COLORREF GetColorIn, HWND hwnd, int f);
 void FreeTool();
 void DrawLine(HDC hdc,POINT coor[2]);
 void updateColor(HDC hdc,COLORREF Color,COLORREF ColorIn);
@@ -245,7 +245,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
             ptPoints[a]=MainMas[f].MassCor[a].xy;
           }
           Polygon(hdc, ptPoints,sizeof ptPoints / sizeof ptPoints[0]);
-          Drawer(hdc,c[0].x,c[0].y,MainMas[f].color,MainMas[f].colorIn);
+          Drawer(hdc,c[0].x,c[0].y,MainMas[f].color,MainMas[f].colorIn, hwnd,f);
           Condition=One;
           DeleteObject(hdc);
         }
@@ -331,7 +331,7 @@ BOOL intersection(POINT c[4])
   double v3=(c[1].x-c[0].x)*(c[2].y-c[0].y)-(c[1].y-c[0].y)*(c[2].x-c[0].x);
   double v4=(c[1].x-c[0].x)*(c[3].y-c[0].y)-(c[1].y-c[0].y)*(c[3].x-c[0].x);
   return ((v1*v2<=0) && (v3*v4<=0));
-}
+} 
 
 COLORREF GetColorIn()
 {
@@ -379,16 +379,57 @@ void updateColor(HDC hdc,COLORREF Color,COLORREF ColorIn)
   SelectObject(hdc, brush);
 }
 
-void Drawer(HDC hdc,int x,int y,COLORREF GetColor,COLORREF GetColorIn)
+void Drawer(HDC hdc,int x,int y,COLORREF GetColor,COLORREF GetColorIn, HWND hwnd, int f)
 {
-  COLORREF Background = GetPixel(hdc,x,y);
-  if (Background==GetColorIn||Background==GetColor)
+  POINT c[4];
+  c[1].x=3000;
+  c[1].y=3000;
+  
+  int left,right,top,bot;
+  left = MainMas[f].MassCor[0].xy.x;
+  right = MainMas[f].MassCor[0].xy.x;
+  top = MainMas[f].MassCor[0].xy.y;
+  bot = MainMas[f].MassCor[0].xy.y;
+  printf("\ttop:%d\nleft:%d\tright:%d,\n\tbot:%d\n\n", top,left,right,bot);
+  for (int i2=0; i2 <= MainMas[f].size; i2++)
   {
-    return;
+    printf("\ttop:%d\nleft:%d\tright:%d,\n\tbot:%d\n\n", top,left,right,bot);
+    if (MainMas[f].MassCor[i2].xy.x < left) left = MainMas[f].MassCor[i2].xy.x;
+    if (MainMas[f].MassCor[i2].xy.x > right) right = MainMas[f].MassCor[i2].xy.x;
+    if (MainMas[f].MassCor[i2].xy.y < top) top = MainMas[f].MassCor[i2].xy.y;
+    if (MainMas[f].MassCor[i2].xy.y > bot) bot = MainMas[f].MassCor[i2].xy.y;
   }
-  SetPixel(hdc,x,y,GetColorIn);
-  Drawer(hdc,x,y-1,GetColor,GetColorIn);
-  Drawer(hdc,x-1,y,GetColor,GetColorIn);
-  Drawer(hdc,x,y+1,GetColor,GetColorIn);
-  Drawer(hdc,x+1,y,GetColor,GetColorIn);//huita
+  printf("\ttop:%d\nleft:%d\tright:%d,\n\tbot:%d\n\n", top,left,right,bot);
+  //return;
+  POINT point;
+  point.x = left;
+  point.y = top;
+  for (int i1 = left; i1 < right; i1++)
+  {
+    for (int j1 = top; j1 < bot; j1++)
+    {
+      int colper=0;
+      
+      c[0].x=point.x;
+      c[0].y=point.y;
+      
+      for(int i=0;i<=MainMas[f].size+1;i++)
+      {
+        c[2]=MainMas[f].MassCor[i].xy;
+        c[3]=MainMas[f].MassCor[i].x1y1;
+        if(intersection(c)==TRUE)
+        {
+          colper+=1;
+        }
+      }
+      if (colper%2!=0) // if vnutri
+      {
+        SetPixel(hdc, point.x, point.y, GetColor);
+      }
+      point.x=point.x+1;
+      printf("x=%d,   y=%d   success\n",point.x,point.y);
+    }
+    point.x=left;
+    point.y=point.y+1;
+  }
 }
