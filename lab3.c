@@ -91,8 +91,9 @@ LRESULT CALLBACK FrameWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
         hFile = CreateFile( "text.txt",GENERIC_READ,  0, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL,NULL); 
         do 
         {
-        ReadFile( hFile, buff, sizeof(buff), &lpNumberOfBytesRead, NULL); 
-        }while(lpNumberOfBytesRead != 0);
+          ReadFile( hFile, buff, sizeof(buff), &lpNumberOfBytesRead, NULL); 
+        }
+        while(lpNumberOfBytesRead != 0);
         CloseHandle(hFile); 
         for(int i=0;size>i;i++)
         {
@@ -119,7 +120,7 @@ LRESULT CALLBACK ChildWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
     case WM_CREATE:
     {
       HINSTANCE hRTFLib = LoadLibrary("RICHED32.DLL");
-      HWND hwndEdit = CreateWindow("RICHEDIT20W",NULL,WS_VISIBLE | WS_CHILD | WS_BORDER | WS_HSCROLL | WS_VSCROLL |ES_NOHIDESEL | ES_AUTOVSCROLL | ES_MULTILINE | ES_SAVESEL,0,0,0,0,hwnd, NULL, NULL, NULL);
+      HWND hwndEdit = CreateWindow("RICHEDIT",NULL,WS_VISIBLE | WS_CHILD | WS_BORDER | WS_HSCROLL | WS_VSCROLL |ES_NOHIDESEL | ES_AUTOVSCROLL | ES_MULTILINE | ES_SAVESEL,0,0,0,0,hwnd, NULL, NULL, NULL);
       SendMessage(hwndEdit,EM_SETEVENTMASK,NULL,ENM_CHANGE);
       SetWindowLongPtr(hwnd, GWLP_USERDATA,(LONG_PTR)hwndEdit);
       break;
@@ -132,10 +133,6 @@ LRESULT CALLBACK ChildWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
         HWND hwndEdit = (HWND)GetWindowLongPtr(hwnd, GWLP_USERDATA);
         SendMessage(hwndEdit,WM_GETTEXT,1024,textRech);
 
-
-
-
-        
         SetWindowLongPtr(hwndClient, GWLP_USERDATA,(LONG_PTR)textRech);
 
 
