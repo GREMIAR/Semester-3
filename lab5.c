@@ -32,6 +32,7 @@ COLORREF GetColorIn();
 COLORREF GetColor();
 void RegClass(WNDPROC,LPCTSTR);
 BOOL intersection(POINT c[4]);
+void ShowInputForDrawing();
 
 enum stateDraw{
   One,//Главное окно отображено
@@ -97,22 +98,19 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
     { 
       if (Condition==One)
       {
-        for(int i=0;i<14;i++)
-        {
-          ShowWindow(HWNDMas[i],SW_HIDE);
-        }
+        ShowInputForDrawing();
         UpdateWindow(hwnd);
         MainMas[Mainsize].MassCor[MainMas[Mainsize].size].xy.x=LOWORD(lParam);
         MainMas[Mainsize].MassCor[MainMas[Mainsize].size].xy.y=HIWORD(lParam);
         MainMas[Mainsize].MassCor[MainMas[Mainsize].size].x1y1.x=0;
         MainMas[Mainsize].MassCor[MainMas[Mainsize].size].x1y1.y=0;
         MainMas[Mainsize].color=GetColor();
-        Condition=Two;
         HDC hdc = GetDC (hwnd);
         updateColor(hdc,MainMas[Mainsize].color,GetColorIn());
         MoveToEx(hdc, MainMas[Mainsize].MassCor[MainMas[Mainsize].size].xy.x, MainMas[Mainsize].MassCor[MainMas[Mainsize].size].xy.y, NULL);
         LineTo(hdc, MainMas[Mainsize].MassCor[MainMas[Mainsize].size].xy.x, MainMas[Mainsize].MassCor[MainMas[Mainsize].size].xy.y);
         DeleteObject(hdc);
+        Condition=Two;
       }
       else if(Condition==Two)
       {
@@ -129,7 +127,6 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
     {
       if (Condition==Three)
       {
-        Condition=Two;
         POINT c[4];
         c[0]=MainMas[Mainsize].MassCor[MainMas[Mainsize].size].xy;
         MainMas[Mainsize].MassCor[MainMas[Mainsize].size].x1y1.x=LOWORD(lParam);
@@ -141,20 +138,18 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
           c[3]=MainMas[Mainsize].MassCor[i].x1y1;
           if(intersection(c)==TRUE)
           {
+            Condition=Four;
             MessageBox(hwnd,"You crossed the line","Error", MB_OK|MB_APPLMODAL);
-            MainMas[Mainsize].size--;
-            MainMas[Mainsize].size++;
-            InvalidateRect(hwnd,NULL,1);
+            Condition=Two;
             return 1;
           }
         }
         if(MainMas[Mainsize].MassCor[MainMas[Mainsize].size].xy.x==MainMas[Mainsize].MassCor[MainMas[Mainsize].size].x1y1.x||MainMas[Mainsize].MassCor[MainMas[Mainsize].size].xy.y==MainMas[Mainsize].MassCor[MainMas[Mainsize].size].x1y1.y)
         {
-            MessageBox(hwnd,"You crossed the line","Error", MB_OK|MB_APPLMODAL);
-            MainMas[Mainsize].size--;
-            MainMas[Mainsize].size++;
-            InvalidateRect(hwnd,NULL,1);
-            return 1;
+          Condition=Four;
+          MessageBox(hwnd,"You crossed the line","Error", MB_OK|MB_APPLMODAL);
+          Condition=Two;
+          return 1;
         }
         HDC hdc = GetDC (hwnd);
         updateColor(hdc,MainMas[Mainsize].color,GetColorIn());
@@ -162,12 +157,12 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
         LineTo(hdc, MainMas[Mainsize].MassCor[MainMas[Mainsize].size].x1y1.x, MainMas[Mainsize].MassCor[MainMas[Mainsize].size].x1y1.y);
         MainMas[Mainsize].size++;
         DeleteObject(hdc);
+        Condition=Two;
       }
       break;
     }
     case WM_MOUSEMOVE:
     {
-      printf("%d",Condition+1);
       if(Condition==One)
       {
         RECT rcClientRect;
@@ -184,7 +179,6 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
         }
         InvalidateRect(hwnd,NULL,1);
       }
-      
       break;
     }
     case WM_RBUTTONDOWN:
@@ -196,6 +190,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
         POINT c[4];
         c[0]=MainMas[Mainsize].MassCor[MainMas[Mainsize].size].xy;
         c[1]=MainMas[Mainsize].MassCor[MainMas[Mainsize].size].x1y1;
+        Condition=Five;
         for(int i=1;i<MainMas[Mainsize].size-1;i++)
         {
           c[2]=MainMas[Mainsize].MassCor[i].xy;
@@ -203,53 +198,35 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
           if(intersection(c)==TRUE)
           {
             MessageBox(hwnd,"You crossed the line\nCan't finish","Error", MB_OK|MB_APPLMODAL);
-            MainMas[Mainsize].size--;
-            MainMas[Mainsize].size++;
             Condition=Two;
             return 1;
           }
         }
-        POINT coordinates[2];
-        coordinates[0]=MainMas[Mainsize].MassCor[MainMas[Mainsize].size].xy;
-        coordinates[1]=MainMas[Mainsize].MassCor[MainMas[Mainsize].size].x1y1;
         HDC hdc = GetDC (hwnd);
         updateColor(hdc,MainMas[Mainsize].color,GetColorIn());
-        DrawLine(hdc,coordinates);
+        DrawLine(hdc,c);
         DeleteObject(hdc);
         Mainsize++;
         Condition=One;
-        for(int i=0;i<14;i++)
-        {
-          ShowWindow(HWNDMas[i],SW_SHOW);
-        }
+        ShowInputForDrawing();
       }
       else if(Condition==One)
       {
-        int colper=0;
+        Condition=Six;
+        RECT rcClientRect;
+        GetClientRect(hwnd, &rcClientRect);
         POINT c[4];
         c[0].x=LOWORD(lParam);
         c[0].y=HIWORD(lParam);
-        c[1].x=2000;
-        c[1].y=2000;
-        for (int f=0;f<Mainsize;f++)
+        c[1].x=rcClientRect.right+1;
+        c[1].y=rcClientRect.bottom+1;
+        int colper=0;
+        HDC hdc = GetDC (hwnd);
+        BOOL Found=FALSE;
+        int f=0;
+        for (f;f<Mainsize;f++)
         {
-          for(int i=0;i<MainMas[f].size+1;i++)
-          {
-            c[2]=MainMas[f].MassCor[i].xy;
-            c[3]=MainMas[f].MassCor[i].x1y1;
-            if(intersection(c)==TRUE)
-            {
-              colper+=1;
-              Condition=Two;
-            }
-          }
-        }
-        if(colper %2 == 1)
-        {
-          HDC hdc = GetDC (hwnd);
-          colper=0;
-          int f=0;
-          for (f;f<Mainsize;f++)
+          if(MainMas[f].DRAW==FALSE)
           {
             for(int i=0;i<MainMas[f].size+1;i++)
             {
@@ -261,28 +238,28 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
                 Condition=Two;
               }
             }
-            if(colper==1&&MainMas[f].DRAW==FALSE)
+            if(colper%2==1)
             {
               MainMas[f].DRAW=TRUE;
               MainMas[f].colorIn=GetColorIn();
+              Found=TRUE;
               break;
             }
             colper=0;
-          }      
-          updateColor(hdc,MainMas[f].color,RGB(185,209,234));
-          POINT ptPoints[MainMas[f].size+1];
-          for(int a=0;a<MainMas[f].size+1;a++)
-          {
-            ptPoints[a]=MainMas[f].MassCor[a].xy;
           }
-          Polygon(hdc, ptPoints,sizeof ptPoints / sizeof ptPoints[0]);
+        }
+        if(Found)
+        {
+          updateColor(hdc,MainMas[f].color,RGB(185,209,234));
           Drawer(hdc,MainMas[f].colorIn, hwnd,f);
           Condition=One;
           DeleteObject(hdc);
         }
         else
         {
+          Condition=Seven;
           MessageBox(hwnd,"You didn't get anywhere","Error", MB_OK|MB_APPLMODAL);
+          Condition=One;
         }
       }
       break;
@@ -409,14 +386,30 @@ void updateColor(HDC hdc,COLORREF Color,COLORREF ColorIn)
   SelectObject(hdc, pen);
   SelectObject(hdc, brush);
 }
+void ShowInputForDrawing()
+{
+  if (Condition==One)
+  {
+    for(int i=0;i<14;i++)
+    {
+      ShowWindow(HWNDMas[i],SW_HIDE);
+    }
+  }
+  else
+  {
+    for(int i=0;i<14;i++)
+    {
+      ShowWindow(HWNDMas[i],SW_SHOW);
+    }
+  }
+}
 
 void Drawer(HDC hdc,COLORREF GetColor,HWND hwnd, int f)
 {
-  int left,right,top,bot;
-  left = MainMas[f].MassCor[0].xy.x;
-  right = MainMas[f].MassCor[0].xy.x;
-  top = MainMas[f].MassCor[0].xy.y;
-  bot = MainMas[f].MassCor[0].xy.y;
+  int left = MainMas[f].MassCor[0].xy.x;
+  int right = MainMas[f].MassCor[0].xy.x;
+  int top = MainMas[f].MassCor[0].xy.y;
+  int bot = MainMas[f].MassCor[0].xy.y;
   for (int i=0; i <= MainMas[f].size; i++)
   {
     if (MainMas[f].MassCor[i].xy.x < left) left = MainMas[f].MassCor[i].xy.x;
