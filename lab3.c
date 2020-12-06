@@ -70,17 +70,9 @@ LRESULT CALLBACK FrameWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
     case WM_COMMAND:
     {
       if(LOWORD(wParam)==NewMDI)
-      {
-        TCHAR textRech[1000];
-        if (size!=0)
-        {
-          HWND hwndEdit = (HWND)GetWindowLongPtr(MashwndMDI[size-1], GWLP_USERDATA);
-          GetWindowText(hwndEdit,textRech,1000);
-        }
+      { 
         MashwndMDI[size++]=CreateMDIWindow("ChildWin","MDIWINDOW",MDIS_ALLCHILDSTYLES,CW_USEDEFAULT,CW_USEDEFAULT,480,200,hwndClient,NULL,NULL);
         SendMessage(hwndClient, WM_MDITILE,NULL,NULL);
-        HWND hwndEdit = (HWND)GetWindowLongPtr(hwndChild, GWLP_USERDATA);
-        SetWindowText(hwndEdit,textRech);
         ShowWindow(hwndChild, SW_SHOW);
       }
       else if(LOWORD(wParam)==Close)
@@ -127,7 +119,7 @@ LRESULT CALLBACK ChildWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
     case WM_CREATE:
     {
       HINSTANCE hRTFLib = LoadLibrary("RICHED32.DLL");
-      HWND hwndEdit = CreateWindow("RICHEDIT",NULL,WS_VISIBLE | WS_CHILD | WS_BORDER | WS_HSCROLL | WS_VSCROLL |ES_NOHIDESEL | ES_AUTOVSCROLL | ES_MULTILINE | ES_SAVESEL,0,0,0,0,hwnd, NULL, NULL, NULL);
+      HWND hwndEdit = CreateWindow("RICHEDIT20W",NULL,WS_VISIBLE | WS_CHILD | WS_BORDER | WS_HSCROLL | WS_VSCROLL |ES_NOHIDESEL | ES_AUTOVSCROLL | ES_MULTILINE | ES_SAVESEL,0,0,0,0,hwnd, NULL, NULL, NULL);
       SendMessage(hwndEdit,EM_SETEVENTMASK,NULL,ENM_CHANGE);
       SetWindowLongPtr(hwnd, GWLP_USERDATA,(LONG_PTR)hwndEdit);
       break;
@@ -136,28 +128,24 @@ LRESULT CALLBACK ChildWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
     {
       if(HIWORD(wParam) == EN_CHANGE)
 			{
-        TCHAR textRech[1000];
+        LPSTR textRech = malloc (sizeof(CHAR)*1024);
         HWND hwndEdit = (HWND)GetWindowLongPtr(hwnd, GWLP_USERDATA);
-        //GetWindowText(hwndEdit,textRech,1000);
+        SendMessage(hwndEdit,WM_GETTEXT,1024,textRech);
 
-      
 
-        printf("%s",textRech);
+
+
+        
+        SetWindowLongPtr(hwndClient, GWLP_USERDATA,(LONG_PTR)textRech);
+
+
+
         for(int i=0;size>i;i++)
         {
           if(hwndClient!=MashwndMDI[i])
           {
-            HWND hwndEdit = (HWND)GetWindowLongPtr(hwndClient, GWLP_USERDATA);
-            CHARRANGE charr;
-
-            charr.cpMin = 0;  // от начала... 
-            charr.cpMax = -1; // ... и до конца текста
-      
-            SendMessage(hwndEdit, EM_EXSETSEL, 0, (LPARAM)&charr);
-              SendMessage(hwndEdit, EM_GETTEXTRANGE, 0, textRech);
-            printf("%s",textRech);
-            //GetWindowText(hwndEdit,textRech,1000);
-            hwndEdit = (HWND)GetWindowLongPtr(MashwndMDI[i], GWLP_USERDATA);
+            HWND hwndEdit = (HWND)GetWindowLongPtr(MashwndMDI[i], GWLP_USERDATA);
+            textRech = (LPSTR)GetWindowLongPtr(hwndClient, GWLP_USERDATA);
             SetWindowText(hwndEdit,textRech);
           }
         }
@@ -175,6 +163,9 @@ LRESULT CALLBACK ChildWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
     case WM_SETFOCUS:
     {
       hwndChild=hwnd;
+      HWND hwndEdit = (HWND)GetWindowLongPtr(hwnd, GWLP_USERDATA);
+      LPSTR str = (LPSTR)GetWindowLongPtr(hwndClient, GWLP_USERDATA);
+      SetWindowText(hwndEdit,str);
       break;
     }
     case WM_CLOSE:
@@ -188,9 +179,14 @@ LRESULT CALLBACK ChildWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
             MashwndMDI[i]=MashwndMDI[i+1];
           }
         }
+
       }
       DestroyWindow(hwnd);
       size--;
+      if (size==0)
+      {
+        SetWindowLongPtr(hwndClient, GWLP_USERDATA,(LONG_PTR)"\0");
+      }
       SendMessage(hwndClient, WM_MDITILE,NULL,NULL);
       break;
     }
@@ -199,3 +195,61 @@ LRESULT CALLBACK ChildWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
   }
   return DefMDIChildProc(hwnd, msg, wParam, lParam);
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
