@@ -14,8 +14,6 @@ void RegClass(WNDPROC,LPCTSTR);
 HWND hwndMain;
 HWND hwndClient;
 HWND hwndChild;
-int size=0;
-HWND MashwndMDI[10];
 
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
 {  
@@ -46,6 +44,15 @@ void RegClass(WNDPROC Proc,LPCTSTR szName)
   RegisterClassA(&wcl);
 }
 
+BOOL CALLBACK ClientWndProc(HWND hWnd,LPARAM lParam)
+{  
+  printf("3");  
+  HWND hwndEdit = (HWND)GetWindowLongPtr(hWnd, GWLP_USERDATA);
+  LPSTR str = (LPSTR)GetWindowLongPtr(hwndClient, GWLP_USERDATA);
+  SetWindowText(hwndEdit,str);
+  return TRUE;
+}
+
 LRESULT CALLBACK FrameWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
   switch (msg)
@@ -71,9 +78,8 @@ LRESULT CALLBACK FrameWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
     {
       if(LOWORD(wParam)==NewMDI)
       { 
-        MashwndMDI[size++]=CreateMDIWindow("ChildWin","MDIWINDOW",MDIS_ALLCHILDSTYLES,CW_USEDEFAULT,CW_USEDEFAULT,480,200,hwndClient,NULL,NULL);
+        CreateMDIWindow("ChildWin","MDIWINDOW",MDIS_ALLCHILDSTYLES,CW_USEDEFAULT,CW_USEDEFAULT,480,200,hwndClient,NULL,NULL);
         SendMessage(hwndClient, WM_MDITILE,NULL,NULL);
-        ShowWindow(hwndChild, SW_SHOW);
       }
       else if(LOWORD(wParam)==Close)
       {
@@ -85,21 +91,18 @@ LRESULT CALLBACK FrameWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
       }
       else if(LOWORD(wParam)==OpenFile)
       {
-        char buff[100];
+        char buff[1024];
         HANDLE hFile;
         DWORD lpNumberOfBytesRead;
-        hFile = CreateFile( "text.txt",GENERIC_READ,  0, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL,NULL); 
+        hFile = CreateFile("text.txt",GENERIC_READ,  0, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL,NULL); 
         do 
         {
           ReadFile( hFile, buff, sizeof(buff), &lpNumberOfBytesRead, NULL); 
         }
         while(lpNumberOfBytesRead != 0);
         CloseHandle(hFile); 
-        for(int i=0;size>i;i++)
-        {
-          HWND hwndEdit = (HWND)GetWindowLongPtr(MashwndMDI[i], GWLP_USERDATA);
-          SetWindowText(hwndEdit,buff);
-        }
+        SetWindowLongPtr(hwndClient, GWLP_USERDATA,(LONG_PTR)buff);
+        EnumChildWindows(hwndClient,EnumFunc,NULL); 
       }
       break;
     }
@@ -108,9 +111,10 @@ LRESULT CALLBACK FrameWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
       PostQuitMessage(0);
     }
     default:
+    {
       return DefFrameProc(hwnd,hwndClient, msg, wParam, lParam);
+    }
   }
-  return DefFrameProc(hwnd, hwndClient, msg, wParam, lParam);
 }
 
 LRESULT CALLBACK ChildWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
@@ -132,20 +136,8 @@ LRESULT CALLBACK ChildWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
         LPSTR textRech = malloc (sizeof(CHAR)*1024);
         HWND hwndEdit = (HWND)GetWindowLongPtr(hwnd, GWLP_USERDATA);
         SendMessage(hwndEdit,WM_GETTEXT,1024,textRech);
-
         SetWindowLongPtr(hwndClient, GWLP_USERDATA,(LONG_PTR)textRech);
-
-
-
-        for(int i=0;size>i;i++)
-        {
-          if(hwndClient!=MashwndMDI[i])
-          {
-            HWND hwndEdit = (HWND)GetWindowLongPtr(MashwndMDI[i], GWLP_USERDATA);
-            textRech = (LPSTR)GetWindowLongPtr(hwndClient, GWLP_USERDATA);
-            SetWindowText(hwndEdit,textRech);
-          }
-        }
+        EnumChildWindows(hwndClient,EnumFunc,NULL); 
       }
       break;
     }
@@ -167,30 +159,13 @@ LRESULT CALLBACK ChildWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
     }
     case WM_CLOSE:
     {
-      for(int i=0;size>i;i++)
-      {
-        if(hwndChild==MashwndMDI[i])
-        {
-          for(i;size>i+1;i++)
-          {
-            MashwndMDI[i]=MashwndMDI[i+1];
-          }
-        }
-
-      }
-      DestroyWindow(hwnd);
-      size--;
-      if (size==0)
-      {
-        SetWindowLongPtr(hwndClient, GWLP_USERDATA,(LONG_PTR)"\0");
-      }
       SendMessage(hwndClient, WM_MDITILE,NULL,NULL);
+      DestroyWindow(hwnd);
       break;
     }
     default:
       return DefMDIChildProc(hwnd, msg, wParam, lParam);
   }
-  return DefMDIChildProc(hwnd, msg, wParam, lParam);
 }
 
 
