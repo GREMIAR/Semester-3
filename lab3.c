@@ -11,14 +11,12 @@ LRESULT CALLBACK ChildWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 #define OpenFile 5
 
 void RegClass(WNDPROC,LPCTSTR); 
-HWND hwndMain;
 HWND hwndClient;
 HWND hwndChild;
-
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
 {  
   RegClass(FrameWndProc,"MainWin");
-  hwndMain = CreateWindow("MainWin", "Main Window", WS_OVERLAPPEDWINDOW, 40, 40, 1080, 720, NULL, NULL, NULL, NULL);
+  HWND hwndMain = CreateWindow("MainWin", "Main Window", WS_OVERLAPPEDWINDOW, 40, 40, 1080, 720, NULL, NULL, NULL, NULL);
   ShowWindow(hwndMain, SW_SHOWNORMAL);
   MSG msg;
   while (GetMessage(&msg, NULL, 0, 0))
@@ -44,12 +42,17 @@ void RegClass(WNDPROC Proc,LPCTSTR szName)
   RegisterClassA(&wcl);
 }
 
-BOOL CALLBACK ClientWndProc(HWND hWnd,LPARAM lParam)
-{  
-  printf("3");  
-  HWND hwndEdit = (HWND)GetWindowLongPtr(hWnd, GWLP_USERDATA);
-  LPSTR str = (LPSTR)GetWindowLongPtr(hwndClient, GWLP_USERDATA);
-  SetWindowText(hwndEdit,str);
+BOOL CALLBACK ClientWndProc(HWND hwnd,LPARAM lParam)
+{
+  if(FindWindowEx(hwnd,NULL,NULL,NULL)==0)
+  {
+    HWND hwndEdit = (HWND)GetWindowLongPtr(hwndChild, GWLP_USERDATA);
+    if(hwndEdit==hwnd)
+    {
+      return TRUE;
+    }
+    SetWindowText(hwnd,lParam);
+  }
   return TRUE;
 }
 
@@ -102,7 +105,7 @@ LRESULT CALLBACK FrameWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
         while(lpNumberOfBytesRead != 0);
         CloseHandle(hFile); 
         SetWindowLongPtr(hwndClient, GWLP_USERDATA,(LONG_PTR)buff);
-        EnumChildWindows(hwndClient,EnumFunc,NULL); 
+        EnumChildWindows(hwndClient,ClientWndProc,buff); 
       }
       break;
     }
@@ -116,28 +119,32 @@ LRESULT CALLBACK FrameWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
     }
   }
 }
-
 LRESULT CALLBACK ChildWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
   switch (msg)
   {
     case WM_CREATE:
     {
-      HINSTANCE hRTFLib = LoadLibrary("RICHED32.DLL");
-      HWND hwndEdit = CreateWindow("RICHEDIT",NULL,WS_VISIBLE | WS_CHILD | WS_BORDER | WS_HSCROLL | WS_VSCROLL |ES_NOHIDESEL | ES_AUTOVSCROLL | ES_MULTILINE | ES_SAVESEL,0,0,0,0,hwnd, NULL, NULL, NULL);
+      HINSTANCE hRTFLib = LoadLibrary("riched32.dll"); 
+      HWND hwndEdit = CreateWindow(RICHEDIT_CLASS,NULL,WS_VISIBLE | WS_CHILD | WS_BORDER | ES_AUTOVSCROLL | ES_AUTOVSCROLL| ES_MULTILINE ,0,0,0,0,hwnd, NULL, NULL, NULL);
       SendMessage(hwndEdit,EM_SETEVENTMASK,NULL,ENM_CHANGE);
       SetWindowLongPtr(hwnd, GWLP_USERDATA,(LONG_PTR)hwndEdit);
+      LPSTR textRech=(LPSTR)GetWindowLongPtr(hwndClient, GWLP_USERDATA);
+      SetWindowText(hwndEdit,textRech);
       break;
     }
     case WM_COMMAND:
     {
       if(HIWORD(wParam) == EN_CHANGE)
 			{
-        LPSTR textRech = malloc (sizeof(CHAR)*1024);
-        HWND hwndEdit = (HWND)GetWindowLongPtr(hwnd, GWLP_USERDATA);
-        SendMessage(hwndEdit,WM_GETTEXT,1024,textRech);
-        SetWindowLongPtr(hwndClient, GWLP_USERDATA,(LONG_PTR)textRech);
-        EnumChildWindows(hwndClient,EnumFunc,NULL); 
+        if(hwndChild==hwnd)
+        {
+          LPSTR textRech = malloc (sizeof(CHAR)*1024);
+          HWND hwndEdit = (HWND)GetWindowLongPtr(hwnd, GWLP_USERDATA);
+          SendMessage(hwndEdit,WM_GETTEXT,1024,textRech);
+          SetWindowLongPtr(hwndClient, GWLP_USERDATA,(LONG_PTR)textRech);
+          EnumChildWindows(hwndClient,ClientWndProc,textRech); 
+        }
       }
       break;
     }
@@ -152,9 +159,6 @@ LRESULT CALLBACK ChildWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
     case WM_SETFOCUS:
     {
       hwndChild=hwnd;
-      HWND hwndEdit = (HWND)GetWindowLongPtr(hwnd, GWLP_USERDATA);
-      LPSTR str = (LPSTR)GetWindowLongPtr(hwndClient, GWLP_USERDATA);
-      SetWindowText(hwndEdit,str);
       break;
     }
     case WM_CLOSE:
