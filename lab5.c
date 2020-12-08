@@ -98,8 +98,6 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
     { 
       if (Condition==One)
       {
-        ShowInputForDrawing();
-        UpdateWindow(hwnd);
         MainMas[Mainsize].MassCor[MainMas[Mainsize].size].xy.x=LOWORD(lParam);
         MainMas[Mainsize].MassCor[MainMas[Mainsize].size].xy.y=HIWORD(lParam);
         MainMas[Mainsize].MassCor[MainMas[Mainsize].size].x1y1.x=0;
@@ -111,6 +109,8 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
         LineTo(hdc, MainMas[Mainsize].MassCor[MainMas[Mainsize].size].xy.x, MainMas[Mainsize].MassCor[MainMas[Mainsize].size].xy.y);
         DeleteObject(hdc);
         Condition=Two;
+        ShowInputForDrawing();
+        UpdateWindow(hwnd);
       }
       else if(Condition==Two)
       {
@@ -388,7 +388,7 @@ void updateColor(HDC hdc,COLORREF Color,COLORREF ColorIn)
 }
 void ShowInputForDrawing()
 {
-  if (Condition==One)
+  if (Condition!=One)
   {
     for(int i=0;i<14;i++)
     {
