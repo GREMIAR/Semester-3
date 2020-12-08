@@ -1,14 +1,14 @@
 #include <windows.h>
-#include <stdio.h>
 #include <Richedit.h>
 
 LRESULT CALLBACK FrameWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);
 LRESULT CALLBACK ChildWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);
+BOOL CALLBACK ClientWndProc(HWND hwnd,LPARAM lParam);
 
 #define NewMDI 1
 #define Close 2
 #define Exit 3
-#define OpenFile 5
+#define OpenFile 4
 
 void RegClass(WNDPROC,LPCTSTR); 
 HWND hwndClient;
@@ -40,20 +40,6 @@ void RegClass(WNDPROC Proc,LPCTSTR szName)
   wcl.hIcon = LoadIcon(NULL,IDI_ASTERISK);
   wcl.hCursor = LoadCursor(NULL,IDC_ARROW);
   RegisterClassA(&wcl);
-}
-
-BOOL CALLBACK ClientWndProc(HWND hwnd,LPARAM lParam)
-{
-  if(FindWindowEx(hwnd,NULL,NULL,NULL)==0)
-  {
-    HWND hwndEdit = (HWND)GetWindowLongPtr(hwndChild, GWLP_USERDATA);
-    if(hwndEdit==hwnd)
-    {
-      return TRUE;
-    }
-    SetWindowText(hwnd,lParam);
-  }
-  return TRUE;
 }
 
 LRESULT CALLBACK FrameWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
@@ -94,18 +80,17 @@ LRESULT CALLBACK FrameWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
       }
       else if(LOWORD(wParam)==OpenFile)
       {
-        char buff[1024];
-        HANDLE hFile;
+        char buff[100];
         DWORD lpNumberOfBytesRead;
-        hFile = CreateFile("text.txt",GENERIC_READ,  0, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL,NULL); 
+        HANDLE hFile = CreateFile("text.txt",GENERIC_READ,  0, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL,NULL); 
         do 
         {
           ReadFile( hFile, buff, sizeof(buff), &lpNumberOfBytesRead, NULL); 
         }
         while(lpNumberOfBytesRead != 0);
         CloseHandle(hFile); 
-        SetWindowLongPtr(hwndClient, GWLP_USERDATA,(LONG_PTR)buff);
-        EnumChildWindows(hwndClient,ClientWndProc,buff); 
+        HWND hwndEdit = (HWND)GetWindowLongPtr(hwndChild, GWLP_USERDATA);
+        SetWindowText(hwndEdit,buff);
       }
       break;
     }
@@ -119,6 +104,21 @@ LRESULT CALLBACK FrameWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
     }
   }
 }
+
+BOOL CALLBACK ClientWndProc(HWND hwnd,LPARAM lParam)
+{
+  if(FindWindowEx(hwnd,NULL,NULL,NULL)==0)
+  {
+    HWND hwndEdit = (HWND)GetWindowLongPtr(hwndChild, GWLP_USERDATA);
+    if(hwndEdit==hwnd)
+    {
+      return TRUE;
+    }
+    SetWindowText(hwnd,lParam);
+  }
+  return TRUE;
+}
+
 LRESULT CALLBACK ChildWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
   switch (msg)
