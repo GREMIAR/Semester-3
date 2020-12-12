@@ -3,11 +3,17 @@
 LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
 void RegClass(WNDPROC,LPCTSTR);
+struct field{
+   BOOL Empty;
+   BOOL Alive;
+};
+struct field Our[9][9];
+struct field Bot[9][9];
 
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
 {
   RegClass(WndProc,"MainWin");
-  HWND hwndMain = CreateWindow("MainWin", "SeaBattle", WS_OVERLAPPEDWINDOW, 40, 40, 1100, 720, NULL, NULL, NULL, NULL);
+  HWND hwndMain = CreateWindow("MainWin", "SeaBattle", WS_OVERLAPPEDWINDOW, 40, 40, 875, 720, NULL, NULL, NULL, NULL);
   ShowWindow(hwndMain, SW_SHOWNORMAL);
   MSG msg;
   while (GetMessage(&msg, NULL, 0, 0))
@@ -36,6 +42,34 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
     {
         case WM_CREATE:
         {
+            for(int i=0;i<10;i++)
+            {
+                for(int f=0;f<10;f++)
+                {
+                     Bot[i][f].Empty=TRUE;
+                     Bot[i][f].Alive =TRUE;
+                }
+            }
+            Bot[0][0].Empty=FALSE;
+            Bot[0][9].Empty=FALSE;
+            Bot[9][0].Empty=FALSE;
+            Bot[9][9].Empty=FALSE;
+            Bot[2][0].Empty=FALSE;
+            Bot[3][0].Empty=FALSE;
+            Bot[5][0].Empty=FALSE;
+            Bot[6][0].Empty=FALSE;
+            Bot[7][0].Empty=FALSE;
+            Bot[9][2].Empty=FALSE;
+            Bot[9][3].Empty=FALSE;
+            Bot[9][4].Empty=FALSE;
+            Bot[9][6].Empty=FALSE;
+            Bot[9][7].Empty=FALSE;
+            Bot[0][2].Empty=FALSE;
+            Bot[0][3].Empty=FALSE;
+            Bot[0][4].Empty=FALSE;
+            Bot[0][5].Empty=FALSE;
+            Bot[2][9].Empty=FALSE;
+            Bot[3][9].Empty=FALSE;
             CreateWindow("static", "   A      B      C      D      E      F      G      H      I      J   ", WS_VISIBLE | WS_CHILD| WS_BORDER, 80, 15, 330, 20, hwnd, NULL, NULL, NULL);
             CreateWindow("static", NULL, WS_VISIBLE | WS_CHILD| WS_BORDER, 61, 34, 20, 330, hwnd, NULL, NULL, NULL);
             int f=1;
@@ -62,6 +96,24 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
             CreateWindow("static", "You", WS_VISIBLE | WS_CHILD, 230, 400, 30, 20, hwnd, NULL, NULL, NULL);
             CreateWindow("static", "OPTIMIZIROVANAI OCHERED", WS_VISIBLE | WS_CHILD, 520, 400, 200, 20, hwnd, NULL, NULL, NULL);
             break;
+        }
+        case WM_LBUTTONDOWN:
+        {
+            int x = LOWORD(lParam);
+            int y = HIWORD(lParam);
+            printf("x=%d,y=%d\n",(x-451)/33,(y-34)/33);
+            if (Bot[(y-34)/33][(x-451)/33].Empty==FALSE)
+            {
+                printf("2");
+                if(Bot[(y-34)/33][(x-451)/33].Alive==TRUE)
+                {
+                    printf("1");
+                    HDC hdc = GetDC (hwnd);
+
+                }
+            }
+
+            
         }
         case WM_PAINT:
         {
