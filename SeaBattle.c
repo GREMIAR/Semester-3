@@ -101,15 +101,25 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
         {
             int x = LOWORD(lParam);
             int y = HIWORD(lParam);
-            printf("x=%d,y=%d\n",(x-451)/33,(y-34)/33);
+            printf("x=%d,y=%d\n",(y-34)/33,(x-451)/33);
             if (Bot[(y-34)/33][(x-451)/33].Empty==FALSE)
             {
-                printf("2");
+                printf("Pum\n");
                 if(Bot[(y-34)/33][(x-451)/33].Alive==TRUE)
                 {
-                    printf("1");
+                    printf("1\n");
                     HDC hdc = GetDC (hwnd);
 
+                }
+            }
+            for(int i=0;i<10;i++)
+            {
+                for(int f=0;f<10;f++)
+                {
+                    if(Bot[i][f].Empty==FALSE)
+                    {
+                        printf("x=%d,y=%d\n",i,f);
+                    }
                 }
             }
 
