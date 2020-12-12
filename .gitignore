@@ -1,5 +1,4 @@
-# Object file
-*.o
-
-# Ada Library Information
-*.ali
+.vscode/launch.json
+.vscode/tasks.json
+lab5.exe
+lab5.o
