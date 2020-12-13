@@ -3,10 +3,12 @@
 LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
 #define Bt1 1
-
+#define Bt2 3
+#define Bt3 2
 void RegClass(WNDPROC,LPCTSTR);
 
 enum which{
+  Stop,
   One1,
   One2,
   One3,
@@ -31,14 +33,16 @@ struct field Bot[10][10];
 BOOL WhoseTurn=TRUE;
 BOOL StageGame=TRUE;
 int NumberShips=20;
-int NumberShipsPlayer=20;
+int NumberShipsPlayer=0;
 void Buum(HDC hdc,int One,int Two);
 void Miss(HDC hdc,int One,int Two);
 void Wound(HDC hdc,int One,int Two);
 void DrawShip(HDC hdc,int One,int Two);
 void Starting();
 void Finished();
-
+HWND del;
+HWND confirm1;
+BOOL ConfirmShip=FALSE;
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
 {
   RegClass(WndProc,"MainWin");
@@ -81,6 +85,8 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
             }
             Starting();
             CreateWindow("button", "Start", WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON,360, 600, 120, 30, hwnd, (HMENU)Bt1, NULL, NULL);
+            del=CreateWindow("button", "Del", WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON,250, 367, 120, 30, hwnd, (HMENU)Bt2, NULL, NULL);
+            confirm1=CreateWindow("button", "Confirm", WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON,120, 367, 120, 30, hwnd, (HMENU)Bt3, NULL, NULL);
             CreateWindow("static", "   A      B      C      D      E      F      G      H      I      J   ", WS_VISIBLE | WS_CHILD| WS_BORDER, 80, 15, 330, 20, hwnd, NULL, NULL, NULL);
             CreateWindow("static", NULL, WS_VISIBLE | WS_CHILD| WS_BORDER, 61, 34, 20, 330, hwnd, NULL, NULL, NULL);
             CreateWindow("static", NULL, WS_VISIBLE | WS_CHILD| WS_BORDER, 431, 34, 20, 330, hwnd, NULL, NULL, NULL);
@@ -96,20 +102,60 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
             CreateWindow("static", "10", WS_VISIBLE | WS_CHILD, 63, 338, 15, 20, hwnd, NULL, NULL, NULL);
             CreateWindow("static", "10", WS_VISIBLE | WS_CHILD, 433, 338, 15, 20, hwnd, NULL, NULL, NULL);
             CreateWindow("static", "   A      B      C      D      E      F      G      H      I      J   ", WS_VISIBLE | WS_CHILD| WS_BORDER, 450, 15, 330, 20, hwnd, NULL, NULL, NULL);
-            CreateWindow("static", "You", WS_VISIBLE | WS_CHILD, 230, 400, 30, 20, hwnd, NULL, NULL, NULL);
-            CreateWindow("static", "OPTIMIZIROVANAI OCHERED", WS_VISIBLE | WS_CHILD, 520, 400, 200, 20, hwnd, NULL, NULL, NULL);
+            CreateWindow("static", "You", WS_VISIBLE | WS_CHILD| WS_BORDER, 230, 400, 28, 20, hwnd, NULL, NULL, NULL);
+            CreateWindow("static", "BOT - Optimized queue", WS_VISIBLE | WS_CHILD| WS_BORDER, 540, 400, 155, 20, hwnd, NULL, NULL, NULL);
+            CreateWindow("static", " ", WS_VISIBLE | WS_CHILD| WS_BORDER, 335, 550, 200, 20, hwnd, NULL, NULL, NULL);
             break;
         }
         case WM_COMMAND:
         {
             if(LOWORD(wParam)==Bt1)
             { 
-                Starting();
+                if(ConfirmShip)
+                {
+                    Starting();
+                    RECT rcClientRect;
+                    GetClientRect(hwnd, &rcClientRect);
+                    rcClientRect.left=420;
+                    InvalidateRect(hwnd,&rcClientRect,1);
+                    StageGame=FALSE;
+                }
+                else
+                {
+                    printf("Podtverdite");
+                }
+            }
+            else if (LOWORD(wParam)==Bt2)
+            {
                 RECT rcClientRect;
                 GetClientRect(hwnd, &rcClientRect);
-                rcClientRect.left=420;
+                rcClientRect.right=420;
                 InvalidateRect(hwnd,&rcClientRect,1);
-                StageGame=FALSE;
+                for(int i=0;i<11;i++)
+                {
+                    for(int f=0;f<11;f++)
+                    {
+                        Our[i][f].Empty=TRUE;
+                        Our[i][f].Alive=TRUE;
+                    }
+                }
+                List=One1;
+                NumberShipsPlayer=0;
+            }
+            else if (LOWORD(wParam)==Bt3)
+            {
+                if(NumberShipsPlayer==20)
+                {
+                    ConfirmShip=TRUE;
+                    ShowWindow(confirm1,SW_HIDE);
+                    ShowWindow(del,SW_HIDE);
+                    List=Stop;
+                }
+                else
+                {
+                    printf("postavte esi\n");
+                }
+                
             }
             break;
         }
@@ -227,7 +273,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
                     HDC hdc = GetDC (hwnd);
                     int y = rand() % (10);
                     int x = rand() % (10);
-                    BOOL DoblMove;
+                    BOOL DoblMove=FALSE;
                     while(!DoblMove)
                     {
                         printf("n=%d\n",NumberShipsPlayer);
@@ -260,62 +306,79 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
             }
             else
             {
-                HDC hdc = GetDC (hwnd);
-                int x = LOWORD(lParam);
-                int y = HIWORD(lParam);
-                int One,Two;
-                if((y-34)>=0&&y<364&&(x-81)>=0&&x<410)
+                if(NumberShipsPlayer<20)
                 {
-                    One=(y-34)/33;
-                    Two=(x-81)/33;
+                    HDC hdc = GetDC (hwnd);
+                    int x = LOWORD(lParam);
+                    int y = HIWORD(lParam);
+                    int One,Two;
+                    if((y-34)>=0&&y<364&&(x-81)>=0&&x<410)
+                    {
+                        One=(y-34)/33;
+                        Two=(x-81)/33;
+                    }
+                    else
+                    {
+                        return 1;
+                    }
+                    if(List==One1)
+                    {
+                        DrawShip(hdc,35+One*33,80+Two*33);
+                        Our[One][Two].Empty=FALSE;
+                        NumberShipsPlayer++;
+        
+                    }
+                    else if(List==One2)
+                    {
+                        DrawShip(hdc,35+One*33,80+Two*33);
+                        Our[One][Two].Empty=FALSE;
+                        NumberShipsPlayer++;
+                    }
+                    else if(List==One3)
+                    {
+                        DrawShip(hdc,35+One*33,80+Two*33);
+                        Our[One][Two].Empty=FALSE;
+                        NumberShipsPlayer++;
+                    }
+                    else if(List==One4)
+                    {
+                        Our[One][Two].Empty=FALSE;
+                        NumberShipsPlayer++;
+                    }
+                    else if(List==Two1)
+                    {
+                        Our[One][Two].Empty=FALSE;
+                        NumberShipsPlayer++;
+                    }
+                    else if(List==Two2)
+                    {
+                        Our[One][Two].Empty=FALSE;
+                        NumberShipsPlayer++;
+                    }
+                    else if(List==Two3)
+                    {
+                        Our[One][Two].Empty=FALSE;
+                        NumberShipsPlayer++;
+                    }
+                    else if(List==Three1)
+                    {
+                        Our[One][Two].Empty=FALSE;
+                        NumberShipsPlayer++;
+                    }
+                    else if(List==Three2)
+                    {
+                        Our[One][Two].Empty=FALSE;
+                        NumberShipsPlayer++;
+                    }
+                    else if(List==Four)
+                    {
+                        Our[One][Two].Empty=FALSE;
+                        NumberShipsPlayer++;
+                    }
                 }
                 else
                 {
-                    return 1;
-                }
-                if(List==One1)
-                {
-                    DrawShip(hdc,35+One*33,80+Two*33);
-                    Our[One][Two].Empty=FALSE;
-    
-                }
-                else if(List==One2)
-                {
-                    DrawShip(hdc,35+One*33,80+Two*33);
-                    Our[One][Two].Empty=FALSE;
-                }
-                else if(List==One3)
-                {
-                    DrawShip(hdc,35+One*33,80+Two*33);
-                    Our[One][Two].Empty=FALSE;
-                }
-                else if(List==One4)
-                {
-                    Our[One][Two].Empty=FALSE;
-                }
-                else if(List==Two1)
-                {
-                    Our[One][Two].Empty=FALSE;
-                }
-                else if(List==Two2)
-                {
-                    Our[One][Two].Empty=FALSE;
-                }
-                else if(List==Two3)
-                {
-                    Our[One][Two].Empty=FALSE;
-                }
-                else if(List==Three1)
-                {
-                    Our[One][Two].Empty=FALSE;
-                }
-                else if(List==Three2)
-                {
-                    Our[One][Two].Empty=FALSE;
-                }
-                else if(List==Four)
-                {
-                   Our[One][Two].Empty=FALSE;
+                    printf("yse=%d\n",NumberShipsPlayer);
                 }
 
             }
@@ -390,7 +453,6 @@ void Wound(HDC hdc,int One,int Two)
 void Starting()
 {
     NumberShips=20;
-    NumberShipsPlayer=20;
     StageGame=TRUE;
     for(int i=0;i<11;i++)
     {
@@ -471,11 +533,16 @@ void Starting()
 
 void Finished()
 {
+    printf("TYT");
+    ConfirmShip=FALSE;
+    List=One1;
+    ShowWindow(confirm1,SW_SHOW);
+    ShowWindow(del,SW_SHOW);
+
     for(int i=0;i<11;i++)
     {
         for(int f=0;f<11;f++)
         {
-
             Our[i][f].Empty=TRUE;
             Our[i][f].Alive=TRUE;
         }
