@@ -6,7 +6,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);
 #define Bt2 3
 #define Bt3 2
 void RegClass(WNDPROC,LPCTSTR);
-
+//горшгрш
 enum which{
   Stop,
   One1,
