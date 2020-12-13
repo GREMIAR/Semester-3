@@ -19,7 +19,8 @@ enum which{
   Four
 };
 enum which List=One1;
-struct field{
+struct field
+{
     BOOL Empty;
     BOOL Alive;
     enum which Who;
@@ -36,6 +37,7 @@ void Miss(HDC hdc,int One,int Two);
 void Wound(HDC hdc,int One,int Two);
 void DrawShip(HDC hdc,int One,int Two);
 void Starting();
+void Finished();
 
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
 {
@@ -217,6 +219,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
                 {
                     printf("Win\n");
                     StageGame=TRUE;
+                    Finished();
                     return;
                 }
                 if (!WhoseTurn) 
@@ -225,9 +228,9 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
                     int y = rand() % (10);
                     int x = rand() % (10);
                     BOOL DoblMove;
-                    while(!DoblMove||NumberShipsPlayer!=0)
+                    while(!DoblMove)
                     {
-                        printf("n=%d",NumberShips);
+                        printf("n=%d\n",NumberShipsPlayer);
                         while(Our[y][x].Alive==FALSE)
                         {
                             y = rand() % (10);
@@ -245,11 +248,13 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
                             Our[y][x].Alive=FALSE;
                             DoblMove=TRUE;
                         }
-                    }
-                    if(NumberShipsPlayer==0)
-                    {
-                        printf("loss");
-                        StageGame=TRUE;
+                        if(NumberShipsPlayer==0)
+                        {
+                            printf("loss");
+                            StageGame=TRUE;
+                            Finished();
+                            return;
+                        }
                     }
                 }     
             }
@@ -464,6 +469,18 @@ void Starting()
     }
 }
 
+void Finished()
+{
+    for(int i=0;i<11;i++)
+    {
+        for(int f=0;f<11;f++)
+        {
+
+            Our[i][f].Empty=TRUE;
+            Our[i][f].Alive=TRUE;
+        }
+    }
+}
 void DrawShip(HDC hdc,int One,int Two)
 {
     HPEN pen = CreatePen(PS_SOLID, 3, RGB(0,0,255));
