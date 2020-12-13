@@ -5,14 +5,14 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);
 void RegClass(WNDPROC,LPCTSTR);
 
 enum which{
-  One1,//Главное окно отображено
+  One1,
   One2,
   One3,
   One4,
-  Two1,//Добавлен элемент фигуры
+  Two1,
   Two2,
   Two3,
-  Three1,//Проверка на пересечение сторон(ЛКМ)
+  Three1,
   Three2,
   Four
 };
@@ -23,7 +23,7 @@ struct field{
     enum which Who;
     int remained;
 };
-struct field Our[9][9];
+struct field Our[10][10];
 struct field Bot[10][10];
 
 void Buum(HDC hdc,int One,int Two);
@@ -139,27 +139,19 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
         
             CreateWindow("static", "   A      B      C      D      E      F      G      H      I      J   ", WS_VISIBLE | WS_CHILD| WS_BORDER, 80, 15, 330, 20, hwnd, NULL, NULL, NULL);
             CreateWindow("static", NULL, WS_VISIBLE | WS_CHILD| WS_BORDER, 61, 34, 20, 330, hwnd, NULL, NULL, NULL);
+            CreateWindow("static", NULL, WS_VISIBLE | WS_CHILD| WS_BORDER, 431, 34, 20, 330, hwnd, NULL, NULL, NULL);
             int f=1;
             for(int i=41;i<330;i+=33)
             {
                 char buffer [33];
                 itoa (f,buffer,10);
                 CreateWindow("static", buffer, WS_VISIBLE | WS_CHILD, 67, i, 10, 20, hwnd, NULL, NULL, NULL);
-                f++;
-            }
-            CreateWindow("static", "10", WS_VISIBLE | WS_CHILD, 63, 338, 15, 20, hwnd, NULL, NULL, NULL);
-
-            CreateWindow("static", "   A      B      C      D      E      F      G      H      I      J   ", WS_VISIBLE | WS_CHILD| WS_BORDER, 450, 15, 330, 20, hwnd, NULL, NULL, NULL);
-            CreateWindow("static", NULL, WS_VISIBLE | WS_CHILD| WS_BORDER, 431, 34, 20, 330, hwnd, NULL, NULL, NULL);
-            f=1;
-            for(int i=41;i<330;i+=33)
-            {
-                char buffer [33];
-                itoa (f,buffer,10);
                 CreateWindow("static", buffer, WS_VISIBLE | WS_CHILD, 437, i, 10, 20, hwnd, NULL, NULL, NULL);
                 f++;
             }
+            CreateWindow("static", "10", WS_VISIBLE | WS_CHILD, 63, 338, 15, 20, hwnd, NULL, NULL, NULL);
             CreateWindow("static", "10", WS_VISIBLE | WS_CHILD, 433, 338, 15, 20, hwnd, NULL, NULL, NULL);
+            CreateWindow("static", "   A      B      C      D      E      F      G      H      I      J   ", WS_VISIBLE | WS_CHILD| WS_BORDER, 450, 15, 330, 20, hwnd, NULL, NULL, NULL);
             CreateWindow("static", "You", WS_VISIBLE | WS_CHILD, 230, 400, 30, 20, hwnd, NULL, NULL, NULL);
             CreateWindow("static", "OPTIMIZIROVANAI OCHERED", WS_VISIBLE | WS_CHILD, 520, 400, 200, 20, hwnd, NULL, NULL, NULL);
             break;
@@ -168,7 +160,6 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
         {
             int x = LOWORD(lParam);
             int y = HIWORD(lParam);
-            printf("y=%d,x=%d\n",x,y);
             int One,Two;
             if((y-34)>=0&&y<364)
             {
@@ -176,7 +167,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
             }
             else
             {
-                return;
+                return 1;
             }
             if((x-451)>=0&&x<780)
             {
@@ -184,7 +175,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
             }
             else
             {
-                return;
+                return 1;
             }
             if (Bot[One][Two].Empty==FALSE)
             {
@@ -197,12 +188,9 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
                     {
                         for(int f=0;f<10;f++)
                         {
-                            if(!Bot[i][f].Empty&&Bot[i][f].Who==Bot[One][Two].Who)
+                            if(!Bot[i][f].Empty&&Bot[i][f].Who==Bot[One][Two].Who&&Bot[i][f].remained>0)
                             {
-                                if(Bot[i][f].remained>0)
-                                {
-                                    Bot[i][f].remained--;
-                                }
+                                Bot[i][f].remained--;
                             }
                         }
                     }
@@ -228,21 +216,9 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
             else
             {
                 HDC hdc = GetDC (hwnd);
+                Bot[One][Two].Alive=FALSE;
                 Miss(hdc,One,Two);
-            }
-            
-           /* for(int i=0;i<10;i++)
-            {
-                for(int f=0;f<10;f++)
-                {
-                    if(Bot[i][f].Empty==FALSE)
-                    {
-                        //printf("y=%d,x=%d\n",f,i);
-                    }
-                }
-            }*/
-
-            
+            }         
         }
         case WM_PAINT:
         {
@@ -285,7 +261,6 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
     return DefWindowProcA(hwnd, msg, wParam, lParam);
 }
 
-
 void Buum(HDC hdc,int One,int Two)
 {
     One=35+One*33;
@@ -294,7 +269,7 @@ void Buum(HDC hdc,int One,int Two)
     HBRUSH brush = CreateSolidBrush(RGB(255,0,0));
     SelectObject(hdc, pen);
     SelectObject(hdc, brush);
-    Rectangle(hdc,Two+4, One+3, Two+33-4,One+33-6);
+    RoundRect(hdc,Two+4, One+3, Two+33-4,One+33-6,5,5);
 }
 
 void Miss(HDC hdc,int One,int Two)
