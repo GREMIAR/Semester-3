@@ -1,8 +1,8 @@
 #include <windows.h>
 #include <stdio.h>
 #include <CommCtrl.h>
- 
 #pragma comment(lib,"ComCtl32.Lib")
+
 LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
 #define Bt1 1
@@ -48,6 +48,7 @@ BOOL cellAvailable(struct field field[10][10], int one, int two,HWND hwndmainw);
 HWND del;
 HWND confirm1;
 BOOL ConfirmShip=FALSE;
+
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
 {
   RegClass(WndProc,"MainWin");
@@ -285,7 +286,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
                     SetWindowText(MainTextInfo,"Victory");
                     StageGame=TRUE;
                     Finished();
-                    return;
+                    return 1;
                 }
                 if (!WhoseTurn) 
                 {
@@ -318,7 +319,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
                             SetWindowText(MainTextInfo,"Defeat");
                             StageGame=TRUE;
                             Finished();
-                            return;
+                            return 1;
                         }
                     }
                     DeleteObject(hdc);
@@ -529,13 +530,13 @@ void Finished()
         }
     }
 }
+
 void DrawShip(HDC hdc,int One,int Two)
 {
     HBRUSH brush = CreateSolidBrush(RGB(0,0,255));
     SelectObject(hdc, brush);
     RoundRect(hdc,Two+4, One+3, Two+29,One+27,5,5);
 }
-
 
 BOOL cellAvailable(struct field field[10][10], int one, int two,HWND hwndmainw)
 {
@@ -587,7 +588,7 @@ BOOL cellAvailable(struct field field[10][10], int one, int two,HWND hwndmainw)
     }
     // only near current ship checking
     //printf("maxl=%d\nshipS=%d\nNumberShipsPlayer=%d\n",maxLength,shipSize,NumberShipsPlayer);
-    if ((NumberShipsPlayer!=0)&&(NumberShipsPlayer!=4)&&(NumberShipsPlayer!=7)&&(NumberShipsPlayer!=10)&&(NumberShipsPlayer!=12)&&(NumberShipsPlayer!=14)&&(NumberShipsPlayer!=16)&&(NumberShipsPlayer<17))
+    if ((NumberShipsPlayer!=0)&&(NumberShipsPlayer!=4)&&(NumberShipsPlayer!=7)&&(NumberShipsPlayer!=10)&&(NumberShipsPlayer!=12)&&(NumberShipsPlayer!=14)&&(NumberShipsPlayer<16))
     {
         // if neighbor cell isnt empty
         for (int i = 0; i < 10; i++)
