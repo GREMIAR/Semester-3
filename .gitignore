@@ -1,5 +1,5 @@
 $ cat .gitignore
-.vscode/launch.json
-.vscode/tasks.json
 *.exe
 *.o
+.vscode/launch.json
+.vscode/tasks.json
