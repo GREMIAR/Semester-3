@@ -314,7 +314,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
             else
             {
                 if(NumberShipsPlayer<20)
-                {
+                { 
                     HDC hdc = GetDC (hwnd);
                     int x = LOWORD(lParam);
                     int y = HIWORD(lParam);
@@ -330,66 +330,18 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
                     }
                     if(Our[One][Two].Empty==TRUE)
                     {
-                        if(List==One1)
+                        if (cellAvailable(Our, One, Two))
                         {
                             DrawShip(hdc,35+One*33,80+Two*33);
                             Our[One][Two].Empty=FALSE;
                             NumberShipsPlayer++;
-            
+                            DeleteObject(hdc);
                         }
-                        else if(List==One2)
-                        {
-                            DrawShip(hdc,35+One*33,80+Two*33);
-                            Our[One][Two].Empty=FALSE;
-                            NumberShipsPlayer++;
-                        }
-                        else if(List==One3)
-                        {
-                            DrawShip(hdc,35+One*33,80+Two*33);
-                            Our[One][Two].Empty=FALSE;
-                            NumberShipsPlayer++;
-                        }
-                        else if(List==One4)
-                        {
-                            Our[One][Two].Empty=FALSE;
-                            NumberShipsPlayer++;
-                        }
-                        else if(List==Two1)
-                        {
-                            Our[One][Two].Empty=FALSE;
-                            NumberShipsPlayer++;
-                        }
-                        else if(List==Two2)
-                        {
-                            Our[One][Two].Empty=FALSE;
-                            NumberShipsPlayer++;
-                        }
-                        else if(List==Two3)
-                        {
-                            Our[One][Two].Empty=FALSE;
-                            NumberShipsPlayer++;
-                        }
-                        else if(List==Three1)
-                        {
-                            Our[One][Two].Empty=FALSE;
-                            NumberShipsPlayer++;
-                        }
-                        else if(List==Three2)
-                        {
-                            Our[One][Two].Empty=FALSE;
-                            NumberShipsPlayer++;
-                        }
-                        else if(List==Four)
-                        {
-                            Our[One][Two].Empty=FALSE;
-                            NumberShipsPlayer++;
-                        }
-                        DeleteObject(hdc);
                     }
                     else
                     {
                         HWND MainTextInfo = (HWND)GetWindowLongPtr(hwnd, GWLP_USERDATA);
-                        SetWindowText(MainTextInfo,"Busy");
+                        SetWindowText(MainTextInfo,"Engaged");
                     }
                 }
                 else
@@ -570,4 +522,83 @@ void DrawShip(HDC hdc,int One,int Two)
     HBRUSH brush = CreateSolidBrush(RGB(0,0,255));
     SelectObject(hdc, brush);
     RoundRect(hdc,Two+4, One+3, Two+29,One+27,5,5);
+}
+
+
+BOOL cellAvailable(struct field field[10][10], int one, int two)
+{
+    // checking diagonal 1-cell-range cells
+    for (int i = 0; i < 10; i++)
+    {
+        if ((i == one-1) || (i == one+1))
+        {
+            for (int j = 0; j < 10; j++)
+            {
+                if ((j == two-1) || (j == two+1))
+                {
+                    if (!field[i][j].Empty)
+                    {
+                        return FALSE;
+                    }
+                }
+            }
+        }
+    }
+
+    // checking ship max size
+    int maxLength;
+    if (NumberShipsPlayer < 4) maxLength = 4;
+    else if (NumberShipsPlayer < 10) maxLength = 3;
+    else if (NumberShipsPlayer < 16) maxLength = 2;
+    else maxLength = 1;
+    int shipSize = 0;
+    for (int i = one-1; i >= 0; i--)
+    {
+        if (field[i][two].Empty) break; else shipSize++;
+    }
+    for (int i = one+1; i < 10; i++)
+    {
+        if (field[i][two].Empty) break; else shipSize++;
+    }
+    for (int i = two-1; i >= 0; i--)
+    {
+        if (field[one][i].Empty) break; else shipSize++;
+    }
+    for (int i = two+1; i < 10; i++)
+    {
+        if (field[one][i].Empty) break; else shipSize++;
+    }
+    if (shipSize>=maxLength)
+    {
+        return FALSE;
+    }
+
+
+    // only near current ship checking
+    printf("%d", NumberShipsPlayer);
+    if ((NumberShipsPlayer!=0)&&(NumberShipsPlayer!=4)&&(NumberShipsPlayer!=7)&&(NumberShipsPlayer!=10)&&(NumberShipsPlayer!=12)&&(NumberShipsPlayer!=14)&&(NumberShipsPlayer!=16)&&(NumberShipsPlayer<17))
+    {
+        // if neighbor cell isnt empty
+        for (int i = 0; i < 10; i++)
+        {
+            for (int j = 0; j < 10; j++)
+            {
+                if ((i == one && (j == two+1 || j == two-1)) || ((j == two && (i == one+1 || i == one-1))))
+                {
+                    if (!field[i][j].Empty)
+                    {
+                        // continue building ship
+                        return TRUE;
+                    }
+                }
+            }
+        }
+    }
+    else
+    {
+        return TRUE;
+    }
+
+
+    return FALSE;
 }
