@@ -11,7 +11,6 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);
 #define Bt4 4
 #define Bt5 5
 #define St 6
-void RegClass(WNDPROC,LPCTSTR);
 enum which{
   Stop,
   One1,
@@ -38,6 +37,11 @@ BOOL WhoseTurn=TRUE;
 BOOL StageGame=TRUE;
 int NumberShips=20;
 int NumberShipsPlayer=0;
+HWND del;
+HWND confirm1;
+BOOL ConfirmShip=FALSE;
+
+void RegClass(WNDPROC,LPCTSTR);
 void Buum(HDC hdc,int One,int Two);
 void Miss(HDC hdc,int One,int Two);
 void Wound(HDC hdc,int One,int Two);
@@ -45,9 +49,6 @@ void DrawShip(HDC hdc,int One,int Two);
 void Starting(HWND hwndmainw);
 void Finished();
 BOOL cellAvailable(struct field field[10][10], int one, int two,HWND hwndmainw);
-HWND del;
-HWND confirm1;
-BOOL ConfirmShip=FALSE;
 
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
 {
@@ -89,10 +90,9 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
                     Our[i][f].Alive=TRUE;
                 }
             }
-            Starting(hwnd);
             CreateWindow("button", "Start", WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON,360, 600, 120, 30, hwnd, (HMENU)Bt1, NULL, NULL);
-            del=CreateWindow("button", "Del", WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON,250, 382, 120, 30, hwnd, (HMENU)Bt2, NULL, NULL);
-            confirm1=CreateWindow("button", "Confirm", WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON,120, 382, 120, 30, hwnd, (HMENU)Bt3, NULL, NULL);
+            del=CreateWindow("button", "Del", WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON,250, 390, 120, 30, hwnd, (HMENU)Bt2, NULL, NULL);
+            confirm1=CreateWindow("button", "Confirm", WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON,120, 390, 120, 30, hwnd, (HMENU)Bt3, NULL, NULL);
             CreateWindow("static", "   A      B      C      D      E      F      G      H      I      J   ", WS_VISIBLE | WS_CHILD| WS_BORDER, 80, 30, 330, 20, hwnd, NULL, NULL, NULL);
             CreateWindow("static", NULL, WS_VISIBLE | WS_CHILD| WS_BORDER, 61, 49, 20, 330, hwnd, NULL, NULL, NULL);
             CreateWindow("static", NULL, WS_VISIBLE | WS_CHILD| WS_BORDER, 431, 49, 20, 330, hwnd, NULL, NULL, NULL);
@@ -110,7 +110,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
             CreateWindow("static", "   A      B      C      D      E      F      G      H      I      J   ", WS_VISIBLE | WS_CHILD| WS_BORDER, 450, 30, 330, 20, hwnd, NULL, NULL, NULL);
             CreateWindow("static", "You", WS_VISIBLE | WS_CHILD| WS_BORDER, 230, 5, 28, 20, hwnd, NULL, NULL, NULL);
             CreateWindow("static", "BOT - Optimized queue", WS_VISIBLE | WS_CHILD| WS_BORDER, 540, 5, 155, 20, hwnd, NULL, NULL, NULL);
-            CreateWindow("button", "Start", WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON,300, 500, 120, 30, hwnd, (HMENU)Bt4, NULL, NULL);
+            CreateWindow("button", "Play", WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON,300, 500, 120, 30, hwnd, (HMENU)Bt4, NULL, NULL);
             CreateWindow("button", "Stop", WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON,425, 500, 120, 30, hwnd, (HMENU)Bt5, NULL, NULL);
             HWND hStatus=CreateStatusWindow(WS_CHILD | WS_VISIBLE, NULL ,hwnd, St);
             SetWindowLongPtr(hwnd, GWLP_USERDATA,(LONG_PTR)hStatus);
@@ -167,7 +167,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
             }
             else if (LOWORD(wParam)==Bt4)
             {
-                
+                HANDLE thread = CreateThread(NULL,0,thread1,NULL, 0, NULL);
             }
             else if (LOWORD(wParam)==Bt5)
             {
