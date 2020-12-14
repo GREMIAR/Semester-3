@@ -111,8 +111,8 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
             CreateWindow("static", "   A      B      C      D      E      F      G      H      I      J   ", WS_VISIBLE | WS_CHILD| WS_BORDER, 450, 30, 330, 20, hwnd, NULL, NULL, NULL);
             CreateWindow("static", "You", WS_VISIBLE | WS_CHILD| WS_BORDER, 230, 5, 28, 20, hwnd, NULL, NULL, NULL);
             CreateWindow("static", "BOT - Optimized queue", WS_VISIBLE | WS_CHILD| WS_BORDER, 540, 5, 155, 20, hwnd, NULL, NULL, NULL);
-            FirstThread = CreateWindow("button", "Play the animation", WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON,20, 525, 160, 30, hwnd, (HMENU)Bt4, NULL, NULL);
-            SecondThread = CreateWindow("button", "Play a running line", WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON,690, 525, 160, 30, hwnd, (HMENU)Bt5, NULL, NULL);
+            FirstThread = CreateWindow("button", "Play the animation", WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON,20, 535, 160, 30, hwnd, (HMENU)Bt4, NULL, NULL);
+            SecondThread = CreateWindow("button", "Play a running line", WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON,690, 535, 160, 30, hwnd, (HMENU)Bt5, NULL, NULL);
             HWND hStatus=CreateStatusWindow(WS_CHILD | WS_VISIBLE, NULL ,hwnd, St);
             SetWindowLongPtr(hwnd, GWLP_USERDATA,(LONG_PTR)hStatus);
             break;
