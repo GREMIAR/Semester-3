@@ -11,8 +11,10 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);
 #define Bt4 4
 #define Bt5 5
 #define St 6
+
+HANDLE threads;
+
 enum which{
-  Stop,
   One1,
   One2,
   One3,
@@ -40,7 +42,8 @@ int NumberShipsPlayer=0;
 HWND del;
 HWND confirm1;
 BOOL ConfirmShip=FALSE;
-
+HWND FirstThread;
+HWND SecondThread;
 void RegClass(WNDPROC,LPCTSTR);
 void Buum(HDC hdc,int One,int Two);
 void Miss(HDC hdc,int One,int Two);
@@ -53,7 +56,7 @@ BOOL cellAvailable(struct field field[10][10], int one, int two,HWND hwndmainw);
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
 {
   RegClass(WndProc,"MainWin");
-  HWND hwnd = CreateWindow("MainWin", "SeaBattle", WS_OVERLAPPEDWINDOW & ~WS_THICKFRAME & ~WS_MAXIMIZEBOX, 500, 75, 870, 700, NULL, NULL, NULL, NULL);
+  HWND hwnd = CreateWindow("MainWin", "SeaBattle", WS_OVERLAPPEDWINDOW & ~WS_THICKFRAME & ~WS_MAXIMIZEBOX, 500, 75, 870, 650, NULL, NULL, NULL, NULL);
   ShowWindow(hwnd, SW_SHOWNORMAL);
   MSG msg;
   while (GetMessage(&msg, NULL, 0, 0))
@@ -90,28 +93,26 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
                     Our[i][f].Alive=TRUE;
                 }
             }
-            CreateWindow("button", "Start", WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON,360, 600, 120, 30, hwnd, (HMENU)Bt1, NULL, NULL);
+            CreateWindow("button", "Start", WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON,375, 550, 120, 30, hwnd, (HMENU)Bt1, NULL, NULL);
             del=CreateWindow("button", "Del", WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON,250, 390, 120, 30, hwnd, (HMENU)Bt2, NULL, NULL);
             confirm1=CreateWindow("button", "Confirm", WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON,120, 390, 120, 30, hwnd, (HMENU)Bt3, NULL, NULL);
             CreateWindow("static", "   A      B      C      D      E      F      G      H      I      J   ", WS_VISIBLE | WS_CHILD| WS_BORDER, 80, 30, 330, 20, hwnd, NULL, NULL, NULL);
             CreateWindow("static", NULL, WS_VISIBLE | WS_CHILD| WS_BORDER, 61, 49, 20, 330, hwnd, NULL, NULL, NULL);
             CreateWindow("static", NULL, WS_VISIBLE | WS_CHILD| WS_BORDER, 431, 49, 20, 330, hwnd, NULL, NULL, NULL);
-            int f=1;
             for(int i=56;i<345;i+=33)
             {
-                char buffer [33];
-                itoa (f,buffer,10);
+                char buffer [0];
+                itoa (i/33,buffer,10);
                 CreateWindow("static", buffer, WS_VISIBLE | WS_CHILD, 67, i, 10, 20, hwnd, NULL, NULL, NULL);
                 CreateWindow("static", buffer, WS_VISIBLE | WS_CHILD, 437, i, 10, 20, hwnd, NULL, NULL, NULL);
-                f++;
             }
             CreateWindow("static", "10", WS_VISIBLE | WS_CHILD, 63, 353, 15, 20, hwnd, NULL, NULL, NULL);
             CreateWindow("static", "10", WS_VISIBLE | WS_CHILD, 433, 353, 15, 20, hwnd, NULL, NULL, NULL);
             CreateWindow("static", "   A      B      C      D      E      F      G      H      I      J   ", WS_VISIBLE | WS_CHILD| WS_BORDER, 450, 30, 330, 20, hwnd, NULL, NULL, NULL);
             CreateWindow("static", "You", WS_VISIBLE | WS_CHILD| WS_BORDER, 230, 5, 28, 20, hwnd, NULL, NULL, NULL);
             CreateWindow("static", "BOT - Optimized queue", WS_VISIBLE | WS_CHILD| WS_BORDER, 540, 5, 155, 20, hwnd, NULL, NULL, NULL);
-            CreateWindow("button", "Play", WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON,300, 500, 120, 30, hwnd, (HMENU)Bt4, NULL, NULL);
-            CreateWindow("button", "Stop", WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON,425, 500, 120, 30, hwnd, (HMENU)Bt5, NULL, NULL);
+            FirstThread = CreateWindow("button", "Play the animation", WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON,20, 525, 160, 30, hwnd, (HMENU)Bt4, NULL, NULL);
+            SecondThread = CreateWindow("button", "Play a running line", WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON,690, 525, 160, 30, hwnd, (HMENU)Bt5, NULL, NULL);
             HWND hStatus=CreateStatusWindow(WS_CHILD | WS_VISIBLE, NULL ,hwnd, St);
             SetWindowLongPtr(hwnd, GWLP_USERDATA,(LONG_PTR)hStatus);
             break;
@@ -167,11 +168,21 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
             }
             else if (LOWORD(wParam)==Bt4)
             {
-                HANDLE thread = CreateThread(NULL,0,thread1,NULL, 0, NULL);
+                /*TCHAR textBut[1024];
+                SendMessage(FirstThread,WM_GETTEXT,1024,textBut);
+                if(textBut=="Play the animation")
+                {
+                    SetWindowText(FirstThread,"Stop the animation");
+                }
+                else
+                {
+                    SetWindowText(FirstThread,textBut);
+                }*/
+               // HANDLE thread = CreateThread(NULL,0,thread1,NULL, 0, NULL);
             }
             else if (LOWORD(wParam)==Bt5)
             {
-
+                //SetWindowText(SecondThread,"Stop a running line");
             }
             break;
         }
@@ -509,7 +520,6 @@ void Starting(HWND hwndmainw)
             if(Bot[i][f].Who==Three1) Bot[i][f].remained=3;
             if(Bot[i][f].Who==Three2) Bot[i][f].remained=3;
             if(Bot[i][f].Who==Four) Bot[i][f].remained=4;
-            
         }
     }
 }
@@ -520,7 +530,6 @@ void Finished()
     ConfirmShip=FALSE;
     ShowWindow(confirm1,SW_SHOW);
     ShowWindow(del,SW_SHOW);
-
     for(int i=0;i<11;i++)
     {
         for(int f=0;f<11;f++)
