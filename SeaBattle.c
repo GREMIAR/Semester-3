@@ -1,10 +1,16 @@
 #include <windows.h>
-
+#include <stdio.h>
+#include <CommCtrl.h>
+ 
+#pragma comment(lib,"ComCtl32.Lib")
 LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
 #define Bt1 1
-#define Bt2 3
-#define Bt3 2
+#define Bt2 2
+#define Bt3 3
+#define Bt4 4
+#define Bt5 5
+#define St 6
 void RegClass(WNDPROC,LPCTSTR);
 enum which{
   Stop,
@@ -19,7 +25,6 @@ enum which{
   Three2,
   Four
 };
-enum which List=One1;
 struct field
 {
     BOOL Empty;
@@ -39,13 +44,14 @@ void Wound(HDC hdc,int One,int Two);
 void DrawShip(HDC hdc,int One,int Two);
 void Starting(HWND hwndmainw);
 void Finished();
+BOOL cellAvailable(struct field field[10][10], int one, int two,HWND hwndmainw);
 HWND del;
 HWND confirm1;
 BOOL ConfirmShip=FALSE;
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
 {
   RegClass(WndProc,"MainWin");
-  HWND hwnd = CreateWindow("MainWin", "SeaBattle", WS_OVERLAPPEDWINDOW, 40, 40, 870, 700, NULL, NULL, NULL, NULL);
+  HWND hwnd = CreateWindow("MainWin", "SeaBattle", WS_OVERLAPPEDWINDOW & ~WS_THICKFRAME & ~WS_MAXIMIZEBOX, 500, 75, 870, 700, NULL, NULL, NULL, NULL);
   ShowWindow(hwnd, SW_SHOWNORMAL);
   MSG msg;
   while (GetMessage(&msg, NULL, 0, 0))
@@ -84,13 +90,13 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
             }
             Starting(hwnd);
             CreateWindow("button", "Start", WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON,360, 600, 120, 30, hwnd, (HMENU)Bt1, NULL, NULL);
-            del=CreateWindow("button", "Del", WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON,250, 367, 120, 30, hwnd, (HMENU)Bt2, NULL, NULL);
-            confirm1=CreateWindow("button", "Confirm", WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON,120, 367, 120, 30, hwnd, (HMENU)Bt3, NULL, NULL);
-            CreateWindow("static", "   A      B      C      D      E      F      G      H      I      J   ", WS_VISIBLE | WS_CHILD| WS_BORDER, 80, 15, 330, 20, hwnd, NULL, NULL, NULL);
-            CreateWindow("static", NULL, WS_VISIBLE | WS_CHILD| WS_BORDER, 61, 34, 20, 330, hwnd, NULL, NULL, NULL);
-            CreateWindow("static", NULL, WS_VISIBLE | WS_CHILD| WS_BORDER, 431, 34, 20, 330, hwnd, NULL, NULL, NULL);
+            del=CreateWindow("button", "Del", WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON,250, 382, 120, 30, hwnd, (HMENU)Bt2, NULL, NULL);
+            confirm1=CreateWindow("button", "Confirm", WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON,120, 382, 120, 30, hwnd, (HMENU)Bt3, NULL, NULL);
+            CreateWindow("static", "   A      B      C      D      E      F      G      H      I      J   ", WS_VISIBLE | WS_CHILD| WS_BORDER, 80, 30, 330, 20, hwnd, NULL, NULL, NULL);
+            CreateWindow("static", NULL, WS_VISIBLE | WS_CHILD| WS_BORDER, 61, 49, 20, 330, hwnd, NULL, NULL, NULL);
+            CreateWindow("static", NULL, WS_VISIBLE | WS_CHILD| WS_BORDER, 431, 49, 20, 330, hwnd, NULL, NULL, NULL);
             int f=1;
-            for(int i=41;i<330;i+=33)
+            for(int i=56;i<345;i+=33)
             {
                 char buffer [33];
                 itoa (f,buffer,10);
@@ -98,14 +104,15 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
                 CreateWindow("static", buffer, WS_VISIBLE | WS_CHILD, 437, i, 10, 20, hwnd, NULL, NULL, NULL);
                 f++;
             }
-            CreateWindow("static", "10", WS_VISIBLE | WS_CHILD, 63, 338, 15, 20, hwnd, NULL, NULL, NULL);
-            CreateWindow("static", "10", WS_VISIBLE | WS_CHILD, 433, 338, 15, 20, hwnd, NULL, NULL, NULL);
-            CreateWindow("static", "   A      B      C      D      E      F      G      H      I      J   ", WS_VISIBLE | WS_CHILD| WS_BORDER, 450, 15, 330, 20, hwnd, NULL, NULL, NULL);
-            CreateWindow("static", "You", WS_VISIBLE | WS_CHILD| WS_BORDER, 230, 400, 28, 20, hwnd, NULL, NULL, NULL);
-            CreateWindow("static", "BOT - Optimized queue", WS_VISIBLE | WS_CHILD| WS_BORDER, 540, 400, 155, 20, hwnd, NULL, NULL, NULL);
-            HWND MainTextInfo = CreateWindow("static", NULL, WS_VISIBLE | WS_CHILD| WS_BORDER, 320, 550, 200, 20, hwnd, NULL, NULL, NULL);
-            SetWindowLongPtr(hwnd, GWLP_USERDATA,(LONG_PTR)MainTextInfo);
-
+            CreateWindow("static", "10", WS_VISIBLE | WS_CHILD, 63, 353, 15, 20, hwnd, NULL, NULL, NULL);
+            CreateWindow("static", "10", WS_VISIBLE | WS_CHILD, 433, 353, 15, 20, hwnd, NULL, NULL, NULL);
+            CreateWindow("static", "   A      B      C      D      E      F      G      H      I      J   ", WS_VISIBLE | WS_CHILD| WS_BORDER, 450, 30, 330, 20, hwnd, NULL, NULL, NULL);
+            CreateWindow("static", "You", WS_VISIBLE | WS_CHILD| WS_BORDER, 230, 5, 28, 20, hwnd, NULL, NULL, NULL);
+            CreateWindow("static", "BOT - Optimized queue", WS_VISIBLE | WS_CHILD| WS_BORDER, 540, 5, 155, 20, hwnd, NULL, NULL, NULL);
+            CreateWindow("button", "Start", WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON,300, 500, 120, 30, hwnd, (HMENU)Bt4, NULL, NULL);
+            CreateWindow("button", "Stop", WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON,425, 500, 120, 30, hwnd, (HMENU)Bt5, NULL, NULL);
+            HWND hStatus=CreateStatusWindow(WS_CHILD | WS_VISIBLE, NULL ,hwnd, St);
+            SetWindowLongPtr(hwnd, GWLP_USERDATA,(LONG_PTR)hStatus);
             break;
         }
         case WM_COMMAND:
@@ -141,7 +148,6 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
                         Our[i][f].Alive=TRUE;
                     }
                 }
-                List=One1;
                 NumberShipsPlayer=0;
             }
             else if (LOWORD(wParam)==Bt3)
@@ -151,13 +157,20 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
                     ConfirmShip=TRUE;
                     ShowWindow(confirm1,SW_HIDE);
                     ShowWindow(del,SW_HIDE);
-                    List=Stop;
                 }
                 else
                 {
                     HWND MainTextInfo = (HWND)GetWindowLongPtr(hwnd, GWLP_USERDATA);
                     SetWindowText(MainTextInfo,"Confirm put in more ships");
                 }
+            }
+            else if (LOWORD(wParam)==Bt4)
+            {
+                
+            }
+            else if (LOWORD(wParam)==Bt5)
+            {
+
             }
             break;
         }
@@ -168,9 +181,9 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
                 int x = LOWORD(lParam);
                 int y = HIWORD(lParam);
                 int One,Two;
-                if((y-34)>=0&&y<364&&(x-451)>=0&&x<780)
+                if((y-49)>=0&&y<379&&(x-451)>=0&&x<780)
                 {
-                    One=(y-34)/33;
+                    One=(y-49)/33;
                     Two=(x-451)/33;
                 }
                 else
@@ -181,9 +194,9 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
                 if (Bot[One][Two].Empty==FALSE&&Bot[One][Two].Alive==TRUE)
                 {
                     HDC hdc = GetDC (hwnd);
-                    if(Bot[(y-34)/33][(x-451)/33].Alive==TRUE)
+                    if(Bot[One][Two].Alive==TRUE)
                     {
-                        Wound(hdc,35+One*33,450+Two*33);
+                        Wound(hdc,50+One*33,450+Two*33);
                         Bot[One][Two].Alive=FALSE;
                         for(int i=0;i<10;i++)
                         {
@@ -203,7 +216,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
                         {
                             if(!Bot[i][f].Empty&&Bot[i][f].Who==Bot[One][Two].Who&&Bot[i][f].remained==0)
                             {
-                                int test1=35+i*33;
+                                int test1=50+i*33;
                                 int test2=450+f*33;
                                 if(Bot[i-1][f-1].Empty&&(i-1>=0)&&(f-1>=0))
                                 {
@@ -257,7 +270,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
                 {
                     HDC hdc = GetDC (hwnd);
                     Bot[One][Two].Alive=FALSE;
-                    Miss(hdc,35+One*33,450+Two*33);
+                    Miss(hdc,50+One*33,450+Two*33);
                     DeleteObject(hdc);
                 }  
                 else
@@ -289,13 +302,13 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
                         }
                         if(Our[y][x].Empty==FALSE)
                         {
-                            Buum(hdc,35+y*33,80+x*33);
+                            Buum(hdc,50+y*33,80+x*33);
                             NumberShipsPlayer--;
                             Our[y][x].Alive=FALSE;
                         }
                         else
                         {
-                            Miss(hdc,35+y*33,80+x*33);
+                            Miss(hdc,50+y*33,80+x*33);
                             Our[y][x].Alive=FALSE;
                             DoblMove=TRUE;
                         }
@@ -319,9 +332,9 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
                     int x = LOWORD(lParam);
                     int y = HIWORD(lParam);
                     int One,Two;
-                    if((y-34)>=0&&y<364&&(x-81)>=0&&x<410)
+                    if((y-49)>=0&&y<379&&(x-81)>=0&&x<410)
                     {
-                        One=(y-34)/33;
+                        One=(y-49)/33;
                         Two=(x-81)/33;
                     }
                     else
@@ -330,9 +343,9 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
                     }
                     if(Our[One][Two].Empty==TRUE)
                     {
-                        if (cellAvailable(Our, One, Two))
+                        if (cellAvailable(Our, One, Two,hwnd))
                         {
-                            DrawShip(hdc,35+One*33,80+Two*33);
+                            DrawShip(hdc,50+One*33,80+Two*33);
                             Our[One][Two].Empty=FALSE;
                             NumberShipsPlayer++;
                             DeleteObject(hdc);
@@ -360,20 +373,20 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
             SelectObject(hdc, pen); 
             for(int i=79;i<433;i+=33)
             {
-                MoveToEx(hdc, i, 35, NULL);
-                LineTo(hdc, i, 363);
+                MoveToEx(hdc, i, 50, NULL);
+                LineTo(hdc, i, 378);
             }
-            for(int i=33;i<370;i+=33)
+            for(int i=48;i<385;i+=33)
             {
                 MoveToEx(hdc, 80, i, NULL);
                 LineTo(hdc, 408, i);
             }
             for(int i=449;i<803;i+=33)
             {
-                MoveToEx(hdc, i, 35, NULL);
-                LineTo(hdc, i, 363);
+                MoveToEx(hdc, i, 50, NULL);
+                LineTo(hdc, i, 378);
             }
-            for(int i=33;i<370;i+=33)
+            for(int i=48;i<385;i+=33)
             {
                 MoveToEx(hdc, 450, i, NULL);
                 LineTo(hdc, 778, i);
@@ -406,7 +419,7 @@ void Miss(HDC hdc,int One,int Two)
     HBRUSH brush = CreateSolidBrush(RGB(255,0,0));
     SelectObject(hdc, pen);
     SelectObject(hdc, brush);
-    Ellipse(hdc,Two+14, One+13, Two+19,One+17);
+    Ellipse(hdc,Two+12, One+11, Two+20,One+18);
 }
 
 void Wound(HDC hdc,int One,int Two)
@@ -504,7 +517,6 @@ void Finished()
 {
     NumberShipsPlayer=0;
     ConfirmShip=FALSE;
-    List=One1;
     ShowWindow(confirm1,SW_SHOW);
     ShowWindow(del,SW_SHOW);
 
@@ -525,9 +537,9 @@ void DrawShip(HDC hdc,int One,int Two)
 }
 
 
-BOOL cellAvailable(struct field field[10][10], int one, int two)
+BOOL cellAvailable(struct field field[10][10], int one, int two,HWND hwndmainw)
 {
-    // checking diagonal 1-cell-range cells
+    HWND MainTextInfo = (HWND)GetWindowLongPtr(hwndmainw, GWLP_USERDATA);
     for (int i = 0; i < 10; i++)
     {
         if ((i == one-1) || (i == one+1))
@@ -538,13 +550,13 @@ BOOL cellAvailable(struct field field[10][10], int one, int two)
                 {
                     if (!field[i][j].Empty)
                     {
+                        SetWindowText(MainTextInfo,"Another ship is too close");
                         return FALSE;
                     }
                 }
             }
         }
     }
-
     // checking ship max size
     int maxLength;
     if (NumberShipsPlayer < 4) maxLength = 4;
@@ -570,12 +582,11 @@ BOOL cellAvailable(struct field field[10][10], int one, int two)
     }
     if (shipSize>=maxLength)
     {
+        SetWindowText(MainTextInfo,"Another ship is too close");
         return FALSE;
     }
-
-
     // only near current ship checking
-    printf("%d", NumberShipsPlayer);
+    //printf("maxl=%d\nshipS=%d\nNumberShipsPlayer=%d\n",maxLength,shipSize,NumberShipsPlayer);
     if ((NumberShipsPlayer!=0)&&(NumberShipsPlayer!=4)&&(NumberShipsPlayer!=7)&&(NumberShipsPlayer!=10)&&(NumberShipsPlayer!=12)&&(NumberShipsPlayer!=14)&&(NumberShipsPlayer!=16)&&(NumberShipsPlayer<17))
     {
         // if neighbor cell isnt empty
@@ -598,7 +609,6 @@ BOOL cellAvailable(struct field field[10][10], int one, int two)
     {
         return TRUE;
     }
-
-
+    SetWindowText(MainTextInfo,"Another ship is too close");
     return FALSE;
 }
