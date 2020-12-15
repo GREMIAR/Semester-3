@@ -136,7 +136,7 @@ LRESULT CALLBACK ChildWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
     case WM_COMMAND:
     {
       if(HIWORD(wParam) == EN_CHANGE)
-			{
+      {
         if(hwndChild==hwnd)
         {
           LPSTR textRech = malloc (sizeof(CHAR)*1024);
@@ -165,67 +165,14 @@ LRESULT CALLBACK ChildWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
     {
       SendMessage(hwndClient, WM_MDITILE,NULL,NULL);
       DestroyWindow(hwnd);
+      if (FindWindowEx(hwndClient,NULL,NULL,NULL)==0)
+      {
+        SetWindowLongPtr(hwndClient, GWLP_USERDATA,(LONG_PTR)"");
+      }
+      SendMessage(hwndClient, WM_MDITILE,NULL,NULL);
       break;
     }
     default:
       return DefMDIChildProc(hwnd, msg, wParam, lParam);
   }
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
