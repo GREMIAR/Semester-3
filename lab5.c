@@ -1,5 +1,4 @@
 #include <windows.h>
-
 LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
 struct saveCor
@@ -33,15 +32,54 @@ COLORREF GetColor();
 void RegClass(WNDPROC,LPCTSTR);
 BOOL intersection(POINT c[4]);
 void ShowInputForDrawing();
+void MoveConditionInd(int Obj);
 
+// 1 - плюс, 2 - минус, 0 - ничего
+int TableOfConditionContects[10][5] = {{1,0,1,1,1},
+                                    {1,0,1,1,1},
+                                    {1,0,2,2,1},
+                                    {1,0,2,2,1},
+                                    {1,0,2,2,1},
+                                    {0,1,0,0,0},
+                                    {1,0,2,0,0},
+                                    {1,0,2,2,1},
+                                    {0,2,2,2,1},
+                                    {0,0,0,0,0}};
+
+LPCTSTR tableOfState[10][9] = {{"","set color","","","","","","",""},
+                           {"","set color","","","","","","",""},
+                           {"","drawing first line","save first, set second","","","","","",""},
+                           {"","","","confirm","","","","",""},//confirm 3 3 
+                           {"","","","change second","","","","",""},
+                           {"","set fill point","set locking","","","","","",""},//set fill point 5 1
+                           {"","","","","","close errorwnd", "", "", "close errorwnd"},
+                           {"","","","","set line", "", "locking", "draw fill", ""},
+                           {"","","","","show errorwnd", "", "show errorwnd", "show errorwnd", ""},
+                           {"","quit","quit", "quit","quit","","quit","quit",""}};
+int TableOfMove[10][10] =      {{0,1,0,0,0,0,0,0,0}, 
+                                {0,1,0,0,0,0,0,0,0},
+                                {0,2,3,0,0,0,0,0,0},
+                                {0,0,0,4,0,0,0,0,0},
+                                {0,0,0,3,0,0,0,0,0},
+                                {0,7,6,0,0,0,0,0,0},
+                                {0,0,0,0,0,2,0,0,1},
+                                {0,0,0,0,2,0,1,1,0},
+                                {0,0,0,0,5,0,5,8,0},
+                                {0,-1,-1,-1,-1,0,-1,-1,0}};
+
+
+int ConditionInd;
+int Object;
 enum stateDraw{
   One,//Главное окно отображено
   Two,//Добавлен элемент фигуры
-  Three,//Проверка на пересечение сторон(ЛКМ)
-  Four,//Отображено окно с ошибкой
-  Five,//Проверка на пересечение сторон(ПКМ)
-  Six,//Проверка курсор внутри или снаружи
-  Seven//Отображено окно с ошибкой
+  Three,
+  Four,
+  Five,//Проверка на пересечение сторон(ЛКМ)
+  Six,//Отображено окно с ошибкой
+  Seven,//Проверка на пересечение сторон(ПКМ)
+  Eight,//Проверка курсор внутри или снаружи
+  Nine//Отображено окно с ошибкой
 };
 
 enum stateDraw Condition;
@@ -78,6 +116,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
   {
     case WM_CREATE:
     {
+      ConditionInd=0;
       HWNDMas[0] = CreateWindow("static", "Color RGB", WS_VISIBLE | WS_CHILD, 80, 15, 75, 20, hwnd, NULL, NULL, NULL);
       HWNDMas[1] = CreateWindow("static", "R", WS_VISIBLE | WS_CHILD, 50, 40, 12, 15, hwnd, NULL, NULL, NULL);
       HWNDMas[2] = CreateWindow("static", "G", WS_VISIBLE | WS_CHILD, 100, 40, 12, 15, hwnd, NULL, NULL, NULL);
@@ -96,7 +135,8 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
     }
     case WM_LBUTTONDOWN:
     { 
-      if (Condition==One)
+      Object=2;
+      if (ConditionInd==1)
       {
         MainMas[Mainsize].MassCor[MainMas[Mainsize].size].xy.x=LOWORD(lParam);
         MainMas[Mainsize].MassCor[MainMas[Mainsize].size].xy.y=HIWORD(lParam);
@@ -108,11 +148,10 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
         MoveToEx(hdc, MainMas[Mainsize].MassCor[MainMas[Mainsize].size].xy.x, MainMas[Mainsize].MassCor[MainMas[Mainsize].size].xy.y, NULL);
         LineTo(hdc, MainMas[Mainsize].MassCor[MainMas[Mainsize].size].xy.x, MainMas[Mainsize].MassCor[MainMas[Mainsize].size].xy.y);
         DeleteObject(hdc);
-        Condition=Two;
         ShowInputForDrawing();
-        UpdateWindow(hwnd);
+        MoveConditionInd(Object);
       }
-      else if(Condition==Two)
+      else if(ConditionInd==2)
       {
         if(MainMas[Mainsize].size-1>=0)
         {
@@ -127,37 +166,44 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
         coordinates[1].y=HIWORD(lParam);
         DrawLine(hdc,coordinates);
         DeleteObject(hdc);
-        Condition=Three;
+        MoveConditionInd(Object);
       }
       break;
     }
     case WM_LBUTTONUP:
     {
-      if (Condition==Three)
+      Object=3;
+      if (ConditionInd==3)
       {
         POINT c[4];
         c[0]=MainMas[Mainsize].MassCor[MainMas[Mainsize].size].xy;
         c[1].x=LOWORD(lParam);
         c[1].y=HIWORD(lParam);
+        MoveConditionInd(Object);
         for(int i=0;i<MainMas[Mainsize].size-1;i++)
         {
           c[2]=MainMas[Mainsize].MassCor[i].xy;
           c[3]=MainMas[Mainsize].MassCor[i].x1y1;
-          if(intersection(c)==TRUE)
+          if(intersection(c))
           {
-            Condition=Four;
+            Object=8;
+            MoveConditionInd(Object);
             MessageBox(hwnd,"You crossed the line","Error", MB_OK|MB_APPLMODAL);
-            Condition=Two;
+            Object=6;
+            MoveConditionInd(Object);
             return 1;
           }
         }
         if(MainMas[Mainsize].MassCor[MainMas[Mainsize].size].xy.x==MainMas[Mainsize].MassCor[MainMas[Mainsize].size].x1y1.x||MainMas[Mainsize].MassCor[MainMas[Mainsize].size].xy.y==MainMas[Mainsize].MassCor[MainMas[Mainsize].size].x1y1.y)
         {
-          Condition=Four;
+          Object=8;
+          MoveConditionInd(Object);
           MessageBox(hwnd,"You crossed the line","Error", MB_OK|MB_APPLMODAL);
-          Condition=Two;
+          Object=6;
+          MoveConditionInd(Object);
           return 1;
         }
+        Object=7;
         MainMas[Mainsize].MassCor[MainMas[Mainsize].size].x1y1.x=c[1].x;
         MainMas[Mainsize].MassCor[MainMas[Mainsize].size].x1y1.y=c[1].y;
         HDC hdc = GetDC (hwnd);
@@ -166,62 +212,58 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
         LineTo(hdc, MainMas[Mainsize].MassCor[MainMas[Mainsize].size].x1y1.x, MainMas[Mainsize].MassCor[MainMas[Mainsize].size].x1y1.y);
         MainMas[Mainsize].size++;
         DeleteObject(hdc);
-        Condition=Two;
+        MoveConditionInd(Object);
       }
       break;
     }
     case WM_MOUSEMOVE:
     {
-      if(Condition==One)
+      Object=4;
+      if(ConditionInd==3)
       {
-        RECT rcClientRect;
-        GetClientRect(hwnd, &rcClientRect);
-        rcClientRect.top=60;
-        InvalidateRect(hwnd,&rcClientRect,1);
-      }
-      else
-      {
-        if(Condition==Three)
-        {
-          MainMas[Mainsize].MassCor[MainMas[Mainsize].size].x1y1.x=LOWORD(lParam);
-          MainMas[Mainsize].MassCor[MainMas[Mainsize].size].x1y1.y=HIWORD(lParam);
-        }
+        MainMas[Mainsize].MassCor[MainMas[Mainsize].size].x1y1.x=LOWORD(lParam);
+        MainMas[Mainsize].MassCor[MainMas[Mainsize].size].x1y1.y=HIWORD(lParam);
         InvalidateRect(hwnd,NULL,1);
       }
       break;
     }
     case WM_RBUTTONDOWN:
     {
-      if (Condition==Two)
+      Object=5;
+      if (ConditionInd==2)
       {
         MainMas[Mainsize].MassCor[MainMas[Mainsize].size].xy=MainMas[Mainsize].MassCor[MainMas[Mainsize].size-1].x1y1;
         MainMas[Mainsize].MassCor[MainMas[Mainsize].size].x1y1=MainMas[Mainsize].MassCor[0].xy;
         POINT c[4];
         c[0]=MainMas[Mainsize].MassCor[MainMas[Mainsize].size].xy;
         c[1]=MainMas[Mainsize].MassCor[MainMas[Mainsize].size].x1y1;
-        Condition=Five;
+        MoveConditionInd(Object);
         for(int i=1;i<MainMas[Mainsize].size-1;i++)
         {
           c[2]=MainMas[Mainsize].MassCor[i].xy;
           c[3]=MainMas[Mainsize].MassCor[i].x1y1;
-          if(intersection(c)==TRUE)
+          if(intersection(c))
           {
+            Object=8;
+            MoveConditionInd(Object);
             MessageBox(hwnd,"You crossed the line\nCan't finish","Error", MB_OK|MB_APPLMODAL);
-            Condition=Two;
+            Object=6;
+            MoveConditionInd(Object);
             return 1;
           }
+          Object=7;
         }
         HDC hdc = GetDC (hwnd);
         updateColor(hdc,MainMas[Mainsize].color,GetColorIn());
         DrawLine(hdc,c);
         DeleteObject(hdc);
         Mainsize++;
-        Condition=One;
         ShowInputForDrawing();
+        MoveConditionInd(Object);
       }
-      else if(Condition==One)
+      else if(ConditionInd==1)
       {
-        Condition=Six;
+        MoveConditionInd(Object);
         RECT rcClientRect;
         GetClientRect(hwnd, &rcClientRect);
         POINT c[4];
@@ -244,7 +286,6 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
               if(intersection(c)==TRUE)
               {
                 colper+=1;
-                Condition=Two;
               }
             }
             if(colper%2==1)
@@ -259,16 +300,19 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
         }
         if(Found)
         {
+          Object=7;
+          MoveConditionInd(Object);
           updateColor(hdc,MainMas[f].color,RGB(185,209,234));
           Drawer(hdc,MainMas[f].colorIn, hwnd,f);
-          Condition=One;
           DeleteObject(hdc);
         }
         else
         {
-          Condition=Seven;
+          Object=8;
+          MoveConditionInd(Object);
           MessageBox(hwnd,"You didn't get anywhere","Error", MB_OK|MB_APPLMODAL);
-          Condition=One;
+          Object=6;
+          MoveConditionInd(Object);
         }
       }
       break;
@@ -276,9 +320,8 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
     case WM_PAINT:
     {
       PAINTSTRUCT ps;
-      if((Condition!=Two))
+      if(ConditionInd==3)
       {
-        printf("%d",LOWORD(lParam));
         HDC hdc = BeginPaint(hwnd,&ps);
         HDC memDC = CreateCompatibleDC(hdc);
         RECT rcClientRect;
@@ -317,6 +360,18 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
         BitBlt(hdc,0,0,rcClientRect.right,rcClientRect.bottom,memDC,0,0,SRCCOPY);
         DeleteObject(bmp);
         DeleteDC(memDC);
+        EndPaint(hwnd,&ps);
+      }
+      else if (ConditionInd==0)
+      {
+        HDC hdc = BeginPaint(hwnd,&ps);
+        ConditionInd=1;
+        FillRect(hdc,&ps.rcPaint,(HBRUSH)(COLOR_WINDOW + 23));
+        EndPaint(hwnd,&ps);
+      }
+      else if (TRUE)
+      {
+        HDC hdc = BeginPaint(hwnd,&ps);
         EndPaint(hwnd,&ps);
       }
       break;
@@ -398,7 +453,7 @@ void updateColor(HDC hdc,COLORREF Color,COLORREF ColorIn)
 }
 void ShowInputForDrawing()
 {
-  if (Condition!=One)
+  if (TableOfConditionContects[ConditionInd][3]==1)
   {
     for(int i=0;i<14;i++)
     {
@@ -456,4 +511,9 @@ void Drawer(HDC hdc,COLORREF GetColor,HWND hwnd, int f)
       }
     }
   }
+}
+
+void MoveConditionInd(int Obj)
+{
+  ConditionInd = TableOfMove[Obj][ConditionInd];
 }
