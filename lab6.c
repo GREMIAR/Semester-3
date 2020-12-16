@@ -1,40 +1,18 @@
 #include <windows.h>
-#include <stdio.h>
+
 LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
 LRESULT CALLBACK WndProcChild(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
-#define edit_id1 1
-#define edit_id2 2
-#define edit_id3 3
-#define edit_id4 4
-#define edit_id5 5
-#define edit_id6 6
-#define button_id1 7
-#define button_id2 8
-#define button_id3 9
-#define list_id 10
-HPEN pen;
-HBRUSH brush;
-HWND hwndMain;
-HWND edit1;
-HWND edit2;
-HWND edit3;
-HWND edit4;
-HWND edit5;
-HWND edit6;
-HWND ListBox;
-HWND DRAW_btn;
-int flag=0;
-int pupu=1;
-BOOL Entry=FALSE;
+
+#define button_id1 1
+#define button_id2 2
+#define button_id3 3
+#define list_id 4
 struct saveCor
 {
-  int x;
-  int y;
-  int x1;
-  int y1;
-  COLORREF color;
+  POINT xy;
+  POINT x1y1;
 };
 
 struct MainPoly
@@ -44,14 +22,22 @@ struct MainPoly
   BOOL DRAW;
   int size;
   COLORREF colorIn;
+  COLORREF color;
 };
+BOOL DefaultS=FALSE;
+BOOL Entry=FALSE;
 int amount;
-struct MainPoly MainMas[100];
-
-struct MainPoly MainE;
+HWND hwndMain;
 int Ind;
-int Mainsize=0;
-void Drawer(HDC hdc,int x,int y,COLORREF GetColor,COLORREF GetColorIn);
+struct MainPoly MainMas[100];
+struct MainPoly ArchiveMas[100];
+HWND ListBox;
+HPEN pen;
+HBRUSH brush;
+int Mainsize;
+int Archivesize;
+HWND HWNDMas[16];
+void Drawer(HDC hdc,COLORREF GetColor,HWND hwnd, int f);
 void FreeTool();
 void DrawLine(HDC hdc,POINT coor[2]);
 void updateColor(HDC hdc,COLORREF Color,COLORREF ColorIn);
@@ -59,12 +45,24 @@ COLORREF GetColorIn();
 COLORREF GetColor();
 void RegClass(WNDPROC,LPCTSTR);
 BOOL intersection(POINT c[4]);
-BOOL DefaultS=FALSE;
-int flag34=0;
+void ShowInputForDrawing();
+
+enum stateDraw{
+  One,//Главное окно отображено
+  Two,//Добавлен элемент фигуры
+  Three,//Проверка на пересечение сторон(ЛКМ)
+  Four,//Отображено окно с ошибкой
+  Five,//Проверка на пересечение сторон(ПКМ)
+  Six,//Проверка курсор внутри или снаружи
+  Seven//Отображено окно с ошибкой
+};
+
+enum stateDraw Condition;
+
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
 {
   RegClass(WndProc,"MainWin");
-  hwndMain = CreateWindow("MainWin", "Main Window", WS_OVERLAPPEDWINDOW, 10, 10, 1100, 720, NULL, NULL, NULL, NULL);
+  hwndMain = CreateWindow("MainWin", "Paint", WS_OVERLAPPEDWINDOW, 40, 40, 1100, 720, NULL, NULL, NULL, NULL);
   ShowWindow(hwndMain, SW_SHOWNORMAL);
   MSG msg;
   while (GetMessage(&msg, NULL, 0, 0))
@@ -94,243 +92,226 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
     case WM_CREATE:
     {
       RegClass(WndProcChild,"ChildWin");
-      MainE.size=0;
-      edit1 = CreateWindow("edit", NULL, WS_VISIBLE | WS_CHILD | WS_BORDER | ES_NUMBER , 65, 38, 30, 20, hwnd, (HMENU)edit_id1, NULL, NULL);
-      edit2 = CreateWindow("edit", NULL, WS_VISIBLE | WS_CHILD | WS_BORDER | ES_NUMBER , 115, 38, 30, 20, hwnd, (HMENU)edit_id2, NULL, NULL);
-      edit3 = CreateWindow("edit", NULL, WS_VISIBLE | WS_CHILD | WS_BORDER | ES_NUMBER , 165, 38, 30, 20, hwnd, (HMENU)edit_id3, NULL, NULL);
-      edit4 = CreateWindow("edit", NULL, WS_VISIBLE | WS_CHILD | WS_BORDER | ES_NUMBER , 900, 38, 30, 20, hwnd, (HMENU)edit_id4, NULL, NULL);
-      edit5 = CreateWindow("edit", NULL, WS_VISIBLE | WS_CHILD | WS_BORDER | ES_NUMBER , 950, 38, 30, 20, hwnd, (HMENU)edit_id5, NULL, NULL);
-      edit6 = CreateWindow("edit", NULL, WS_VISIBLE | WS_CHILD | WS_BORDER | ES_NUMBER , 1000, 38, 30, 20, hwnd, (HMENU)edit_id6, NULL, NULL);
-      HWND textMain = CreateWindow("static", "Color RGB", WS_VISIBLE | WS_CHILD, 80, 15, 75, 20, hwnd, NULL, NULL, NULL);
-      HWND R = CreateWindow("static", "R", WS_VISIBLE | WS_CHILD, 50, 40, 12, 15, hwnd, NULL, NULL, NULL);
-      HWND G = CreateWindow("static", "G", WS_VISIBLE | WS_CHILD, 100, 40, 12, 15, hwnd, NULL, NULL, NULL);
-      HWND B = CreateWindow("static", "B", WS_VISIBLE | WS_CHILD, 150, 40, 12, 15, hwnd, NULL, NULL, NULL);
-      HWND textMain_In = CreateWindow("static", "Color RGB in", WS_VISIBLE | WS_CHILD, 915, 15, 90, 20, hwnd, NULL, NULL, NULL);
-      HWND R_In = CreateWindow("static", "R", WS_VISIBLE | WS_CHILD, 885, 40, 12, 15, hwnd, NULL, NULL, NULL);
-      HWND G_In = CreateWindow("static", "G", WS_VISIBLE | WS_CHILD, 935, 40, 12, 15, hwnd, NULL, NULL, NULL);
-      HWND B_In = CreateWindow("static", "B", WS_VISIBLE | WS_CHILD, 985, 40, 12, 15, hwnd, NULL, NULL, NULL);
-      HWND buttonDownload =  CreateWindow("button", "Download", WS_VISIBLE | WS_CHILD | WS_BORDER | BS_DEFPUSHBUTTON , 430, 38, 100, 20, hwnd, (HMENU)button_id1, NULL, NULL);
-      HWND buttonSave =  CreateWindow("button", "Save", WS_VISIBLE | WS_CHILD | WS_BORDER | BS_DEFPUSHBUTTON , 570, 38, 100, 20, hwnd, (HMENU)button_id2, NULL, NULL);
-
+      HWNDMas[0] = CreateWindow("static", "Color RGB", WS_VISIBLE | WS_CHILD, 80, 15, 75, 20, hwnd, NULL, NULL, NULL);
+      HWNDMas[1] = CreateWindow("static", "R", WS_VISIBLE | WS_CHILD, 50, 40, 12, 15, hwnd, NULL, NULL, NULL);
+      HWNDMas[2] = CreateWindow("static", "G", WS_VISIBLE | WS_CHILD, 100, 40, 12, 15, hwnd, NULL, NULL, NULL);
+      HWNDMas[3] = CreateWindow("static", "B", WS_VISIBLE | WS_CHILD, 150, 40, 12, 15, hwnd, NULL, NULL, NULL);
+      HWNDMas[4] = CreateWindow("static", "Color RGB in", WS_VISIBLE | WS_CHILD, 915, 15, 90, 20, hwnd, NULL, NULL, NULL);
+      HWNDMas[5] = CreateWindow("static", "R", WS_VISIBLE | WS_CHILD, 885, 40, 12, 15, hwnd, NULL, NULL, NULL);
+      HWNDMas[6] = CreateWindow("static", "G", WS_VISIBLE | WS_CHILD, 935, 40, 12, 15, hwnd, NULL, NULL, NULL);
+      HWNDMas[7] = CreateWindow("static", "B", WS_VISIBLE | WS_CHILD, 985, 40, 12, 15, hwnd, NULL, NULL, NULL);
+      HWNDMas[8] = CreateWindow("edit", NULL, WS_VISIBLE | WS_CHILD | WS_BORDER | ES_NUMBER , 65, 38, 30, 20, hwnd, NULL, NULL, NULL);
+      HWNDMas[9] = CreateWindow("edit", NULL, WS_VISIBLE | WS_CHILD | WS_BORDER | ES_NUMBER , 115, 38, 30, 20, hwnd, NULL, NULL, NULL);
+      HWNDMas[10]= CreateWindow("edit", NULL, WS_VISIBLE | WS_CHILD | WS_BORDER | ES_NUMBER , 165, 38, 30, 20, hwnd, NULL, NULL, NULL);
+      HWNDMas[11]= CreateWindow("edit", NULL, WS_VISIBLE | WS_CHILD | WS_BORDER | ES_NUMBER , 900, 38, 30, 20, hwnd, NULL, NULL, NULL);
+      HWNDMas[12]= CreateWindow("edit", NULL, WS_VISIBLE | WS_CHILD | WS_BORDER | ES_NUMBER , 950, 38, 30, 20, hwnd, NULL, NULL, NULL);
+      HWNDMas[13]= CreateWindow("edit", NULL, WS_VISIBLE | WS_CHILD | WS_BORDER | ES_NUMBER , 1000, 38, 30, 20, hwnd, NULL, NULL, NULL);
+      HWNDMas[14] =  CreateWindow("button", "Archive", WS_VISIBLE | WS_CHILD | WS_BORDER | BS_DEFPUSHBUTTON , 430, 38, 100, 20, hwnd, (HMENU)button_id1, NULL, NULL);
+      HWNDMas[15] =  CreateWindow("button", "Clear", WS_VISIBLE | WS_CHILD | WS_BORDER | BS_DEFPUSHBUTTON , 570, 38, 100, 20, hwnd, (HMENU)button_id2, NULL, NULL);
       break;
     }
     case WM_COMMAND:
     {
         if(LOWORD(wParam) == button_id1)
         {
-            HWND hwnd1 = CreateWindow("ChildWin", "Window", WS_OVERLAPPEDWINDOW  , 700, 150, 1000, 500, hwnd, NULL, NULL, NULL);
-            ShowWindow(hwnd1, SW_SHOWNORMAL);
+          HWND hwnd1 = CreateWindow("ChildWin", "Window", WS_OVERLAPPEDWINDOW  , 700, 150, 1000, 500, hwnd, NULL, NULL, NULL);
+          ShowWindow(hwnd1, SW_SHOWNORMAL);
         }
         else if(LOWORD(wParam) == button_id2)
         {
-          if(MainE.CLOSE==TRUE)
+          for(int i=0;i<Mainsize;i++)
           {
-            MainMas[Mainsize]=MainE;
-            Mainsize++;
+            MainMas[i].size=0;
+            MainMas[i].MassCor->xy.x=0;
+            MainMas[i].MassCor->xy.y=0;
+            MainMas[i].MassCor->x1y1.x=0;
+            MainMas[i].MassCor->x1y1.y=0;
+            MainMas[i].DRAW=FALSE;
+            MainMas[i].CLOSE=FALSE;
           }
-          else
-          {
-            MessageBox(hwnd,"Noooo","Error4", MB_OK);
-          }
+          Mainsize=0;
+          Condition=One;
+          InvalidateRect(hwnd,NULL,1);
         }
         break;
     }
     case WM_LBUTTONDOWN:
-    {
-      if (pupu==1)
+    { 
+      if (Condition==One)
       {
-        MainE.CLOSE=FALSE;
-        MainE.colorIn=0;
-        MainE.DRAW=FALSE;
-        MainE.size=0;
-        pupu=0;
+        MainMas[Mainsize].MassCor[MainMas[Mainsize].size].xy.x=LOWORD(lParam);
+        MainMas[Mainsize].MassCor[MainMas[Mainsize].size].xy.y=HIWORD(lParam);
+        MainMas[Mainsize].MassCor[MainMas[Mainsize].size].x1y1.x=0;
+        MainMas[Mainsize].MassCor[MainMas[Mainsize].size].x1y1.y=0;
+        MainMas[Mainsize].color=GetColor();
+        HDC hdc = GetDC (hwnd);
+        updateColor(hdc,MainMas[Mainsize].color,GetColorIn());
+        MoveToEx(hdc, MainMas[Mainsize].MassCor[MainMas[Mainsize].size].xy.x, MainMas[Mainsize].MassCor[MainMas[Mainsize].size].xy.y, NULL);
+        LineTo(hdc, MainMas[Mainsize].MassCor[MainMas[Mainsize].size].xy.x, MainMas[Mainsize].MassCor[MainMas[Mainsize].size].xy.y);
+        DeleteObject(hdc);
+        Condition=Two;
+        ShowInputForDrawing();
+        UpdateWindow(hwnd);
       }
-      flag34=0;
-      flag=1;
-      int x = LOWORD(lParam);
-      int y = HIWORD(lParam);
-      if (MainE.size!=0)
+      else if(Condition==Two)
       {
-        MainE.MassCor[MainE.size].x=MainE.MassCor[MainE.size-1].x1;
-        MainE.MassCor[MainE.size].y=MainE.MassCor[MainE.size-1].y1;
-        MainE.MassCor[MainE.size].color=GetColor();
-      }
-      else
-      {
-        MainE.MassCor[MainE.size].x=x;
-        MainE.MassCor[MainE.size].y=y;
-        MainE.MassCor[MainE.size].color=GetColor();
+        if(MainMas[Mainsize].size-1>=0)
+        {
+          MainMas[Mainsize].MassCor[MainMas[Mainsize].size].xy=MainMas[Mainsize].MassCor[MainMas[Mainsize].size-1].x1y1;
+        }
+        HDC hdc = GetDC (hwnd);
+        POINT coordinates[2];
+        updateColor(hdc,MainMas[Mainsize].color,GetColorIn());
+        coordinates[0].x=MainMas[Mainsize].MassCor[MainMas[Mainsize].size].xy.x;
+        coordinates[0].y=MainMas[Mainsize].MassCor[MainMas[Mainsize].size].xy.y;
+        coordinates[1].x=LOWORD(lParam);
+        coordinates[1].y=HIWORD(lParam);
+        DrawLine(hdc,coordinates);
+        DeleteObject(hdc);
+        Condition=Three;
       }
       break;
     }
     case WM_LBUTTONUP:
     {
-      flag=2;
-      POINT c[4];
-      c[0].x=-MainE.MassCor[MainE.size].x;
-      c[0].y=-MainE.MassCor[MainE.size].y;
-      c[1].x=-MainE.MassCor[MainE.size].x1;
-      c[1].y=-MainE.MassCor[MainE.size].y1;
-      for(int i=0;i<MainE.size-1;i++)
+      if (Condition==Three)
       {
-        c[2].x=-MainE.MassCor[i].x;
-        c[2].y=-MainE.MassCor[i].y;
-        c[3].x=-MainE.MassCor[i].x1;
-        c[3].y=-MainE.MassCor[i].y1;
-        if(intersection(c)==TRUE)
+        POINT c[4];
+        c[0]=MainMas[Mainsize].MassCor[MainMas[Mainsize].size].xy;
+        c[1].x=LOWORD(lParam);
+        c[1].y=HIWORD(lParam);
+        for(int i=0;i<MainMas[Mainsize].size-1;i++)
         {
-          MessageBox(hwnd,"You crossed the line","Error", MB_OK);
-          MainE.size--;
-          MainE.size++;
-          flag=1;
+          c[2]=MainMas[Mainsize].MassCor[i].xy;
+          c[3]=MainMas[Mainsize].MassCor[i].x1y1;
+          if(intersection(c)==TRUE)
+          {
+            Condition=Four;
+            MessageBox(hwnd,"You crossed the line","Error", MB_OK|MB_APPLMODAL);
+            Condition=Two;
+            return 1;
+          }
+        }
+        if(MainMas[Mainsize].MassCor[MainMas[Mainsize].size].xy.x==MainMas[Mainsize].MassCor[MainMas[Mainsize].size].x1y1.x||MainMas[Mainsize].MassCor[MainMas[Mainsize].size].xy.y==MainMas[Mainsize].MassCor[MainMas[Mainsize].size].x1y1.y)
+        {
+          Condition=Four;
+          MessageBox(hwnd,"You crossed the line","Error", MB_OK|MB_APPLMODAL);
+          Condition=Two;
           return 1;
         }
+        MainMas[Mainsize].MassCor[MainMas[Mainsize].size].x1y1.x=c[1].x;
+        MainMas[Mainsize].MassCor[MainMas[Mainsize].size].x1y1.y=c[1].y;
+        HDC hdc = GetDC (hwnd);
+        updateColor(hdc,MainMas[Mainsize].color,GetColorIn());
+        MoveToEx(hdc, MainMas[Mainsize].MassCor[MainMas[Mainsize].size].xy.x, MainMas[Mainsize].MassCor[MainMas[Mainsize].size].xy.y, NULL);
+        LineTo(hdc, MainMas[Mainsize].MassCor[MainMas[Mainsize].size].x1y1.x, MainMas[Mainsize].MassCor[MainMas[Mainsize].size].x1y1.y);
+        MainMas[Mainsize].size++;
+        DeleteObject(hdc);
+        Condition=Two;
       }
-      MainE.size++;
       break;
     }
     case WM_MOUSEMOVE:
     {
-      int x = LOWORD(lParam);
-      int y = HIWORD(lParam);
-      if(flag==1)
+      if(Condition==One)
       {
-        MainE.MassCor[MainE.size].x1=x;
-        MainE.MassCor[MainE.size].y1=y;
+        RECT rcClientRect;
+        GetClientRect(hwnd, &rcClientRect);
+        rcClientRect.top=60;
+        InvalidateRect(hwnd,&rcClientRect,1);
       }
-      RECT rcClientRect;
-      GetClientRect(hwnd, &rcClientRect);
-      rcClientRect.top=60;
-      InvalidateRect(hwnd,&rcClientRect,1);
+      else
+      {
+        if(Condition==Three)
+        {
+          MainMas[Mainsize].MassCor[MainMas[Mainsize].size].x1y1.x=LOWORD(lParam);
+          MainMas[Mainsize].MassCor[MainMas[Mainsize].size].x1y1.y=HIWORD(lParam);
+        }
+        InvalidateRect(hwnd,NULL,1);
+      }
       break;
     }
     case WM_RBUTTONDOWN:
     {
-      if (flag34==0)
+      if (Condition==Two)
       {
-        MainE.MassCor[MainE.size].x=MainE.MassCor[MainE.size-1].x1;
-        MainE.MassCor[MainE.size].y=MainE.MassCor[MainE.size-1].y1;
-        MainE.MassCor[MainE.size].x1=MainE.MassCor[0].x;
-        MainE.MassCor[MainE.size].y1=MainE.MassCor[0].y;
-        MainE.MassCor[MainE.size].color=GetColor();
-        flag=2;
+        MainMas[Mainsize].MassCor[MainMas[Mainsize].size].xy=MainMas[Mainsize].MassCor[MainMas[Mainsize].size-1].x1y1;
+        MainMas[Mainsize].MassCor[MainMas[Mainsize].size].x1y1=MainMas[Mainsize].MassCor[0].xy;
         POINT c[4];
-        c[0].x=-MainE.MassCor[MainE.size].x;
-        c[0].y=-MainE.MassCor[MainE.size].y;
-        c[1].x=-MainE.MassCor[MainE.size].x1;
-        c[1].y=-MainE.MassCor[MainE.size].y1;
-
-        for(int i=1;i<MainE.size-1;i++)
+        c[0]=MainMas[Mainsize].MassCor[MainMas[Mainsize].size].xy;
+        c[1]=MainMas[Mainsize].MassCor[MainMas[Mainsize].size].x1y1;
+        Condition=Five;
+        for(int i=1;i<MainMas[Mainsize].size-1;i++)
         {
-          c[2].x=-MainE.MassCor[i].x;
-          c[2].y=-MainE.MassCor[i].y;
-          c[3].x=-MainE.MassCor[i].x1;
-          c[3].y=-MainE.MassCor[i].y1;
+          c[2]=MainMas[Mainsize].MassCor[i].xy;
+          c[3]=MainMas[Mainsize].MassCor[i].x1y1;
           if(intersection(c)==TRUE)
           {
-            MessageBox(hwnd,"You crossed the line\nCan't finish","Error2", MB_OK);
-            MainE.size--;
-            MainE.size++;
-            flag=1;
+            MessageBox(hwnd,"You crossed the line\nCan't finish","Error", MB_OK|MB_APPLMODAL);
+            Condition=Two;
             return 1;
           }
         }
-        POINT coordinates[2];
-        coordinates[0].x=MainE.MassCor[MainE.size].x;
-        coordinates[0].y=MainE.MassCor[MainE.size].y;
-        coordinates[1].x=MainE.MassCor[MainE.size].x1;
-        coordinates[1].y=MainE.MassCor[MainE.size].y1;
         HDC hdc = GetDC (hwnd);
-        updateColor(hdc,GetColor(),GetColorIn());
-        POINT ptPoints[MainE.size+1];
-        for(int i=0;i<MainE.size+1;i++)
-        {
-          ptPoints[i].x=MainE.MassCor[i].x;
-          ptPoints[i].y=MainE.MassCor[i].y;
-        }
-        DrawLine(hdc,coordinates);
-        MainE.CLOSE=TRUE;
-        pupu=1;
+        updateColor(hdc,MainMas[Mainsize].color,GetColorIn());
+        DrawLine(hdc,c);
         DeleteObject(hdc);
-        flag34=1;
+        Mainsize++;
+        Condition=One;
+        ShowInputForDrawing();
       }
-      else
+      else if(Condition==One)
       {
-        int colper=0;
-        int x = LOWORD(lParam);
-        int y = HIWORD(lParam);
+        Condition=Six;
+        RECT rcClientRect;
+        GetClientRect(hwnd, &rcClientRect);
         POINT c[4];
-        c[0].x=x;
-        c[0].y=y;
-        c[1].x=1100;
-        c[1].y=720;
-        for(int i=0;i<MainE.size+1;i++)
-        {
-            c[2].x=MainE.MassCor[i].x;
-            c[2].y=MainE.MassCor[i].y;
-            c[3].x=MainE.MassCor[i].x1;
-            c[3].y=MainE.MassCor[i].y1;
-            if(intersection(c)==TRUE)
-            {
-              colper+=1;
-              flag=2;
-            }  
-        }
+        c[0].x=LOWORD(lParam);
+        c[0].y=HIWORD(lParam);
+        c[1].x=rcClientRect.right+1;
+        c[1].y=rcClientRect.bottom+1;
+        int colper=0;
         HDC hdc = GetDC (hwnd);
-        updateColor(hdc,MainE.MassCor->color,RGB(185,209,234));
-        POINT ptPoints[MainE.size+1];
-        for(int a=0;a<MainE.size+1;a++)
+        BOOL Found=FALSE;
+        int f=0;
+        for (f;f<Mainsize;f++)
         {
-          ptPoints[a].x=MainE.MassCor[a].x;
-          ptPoints[a].y=MainE.MassCor[a].y;
-        }
-        Polygon(hdc, ptPoints,sizeof ptPoints / sizeof ptPoints[0]);
-        if(colper %2 == 1)
-        {
-          HDC hdc = GetDC (hwnd);
-          c[0].x=-x;
-          c[0].y=-y;
-          c[1].x=-2000;
-          c[1].y=-2000;
-          colper=0;
-          int i1=0;
-            for(int i=0;i<MainE.size+1;i++)
+          if(MainMas[f].DRAW==FALSE)
+          {
+            for(int i=0;i<MainMas[f].size+1;i++)
             {
-              c[2].x=-MainE.MassCor[i].x;
-              c[2].y=-MainE.MassCor[i].y;
-              c[3].x=-MainE.MassCor[i].x1;
-              c[3].y=-MainE.MassCor[i].y1;
+              c[2]=MainMas[f].MassCor[i].xy;
+              c[3]=MainMas[f].MassCor[i].x1y1;
               if(intersection(c)==TRUE)
               {
                 colper+=1;
-                flag=2;
+                Condition=Two;
               }
             }
-            if(colper==1&&MainE.DRAW==FALSE)
+            if(colper%2==1)
             {
-              MainE.DRAW=TRUE;
-              MainE.colorIn=GetColorIn();
+              MainMas[f].DRAW=TRUE;
+              MainMas[f].colorIn=GetColorIn();
+              Found=TRUE;
               break;
             }
             colper=0;
-          
-          int x = LOWORD(lParam);
-          int y = HIWORD(lParam);
-          updateColor(hdc,MainE.MassCor->color,RGB(185,209,234));
-          POINT ptPoints[MainE.size+1];
-          for(int a=0;a<MainE.size+1;a++)
-          {
-            ptPoints[a].x=MainE.MassCor[a].x;
-            ptPoints[a].y=MainE.MassCor[a].y;
           }
-          Polygon(hdc, ptPoints,sizeof ptPoints / sizeof ptPoints[0]);
-          Drawer(hdc,x,y,GetColor(),GetColorIn());
-          flag=2;
+        }
+        if(Found)
+        {
+          updateColor(hdc,MainMas[f].color,RGB(185,209,234));
+          Drawer(hdc,MainMas[f].colorIn, hwnd,f);
+          ArchiveMas[Archivesize]=MainMas[f];
+          Archivesize++;
+          Condition=One;
           DeleteObject(hdc);
         }
         else
         {
-          MessageBox(hwnd,"You didn't get anywhere","Error3", MB_OK);
+          Condition=Seven;
+          MessageBox(hwnd,"You didn't get anywhere","Error", MB_OK|MB_APPLMODAL);
+          Condition=One;
         }
       }
       break;
@@ -338,7 +319,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
     case WM_PAINT:
     {
       PAINTSTRUCT ps;
-      if((flag==1))
+      if((Condition!=Two))
       {
         HDC hdc = BeginPaint(hwnd,&ps);
         HDC memDC = CreateCompatibleDC(hdc);
@@ -348,66 +329,39 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
         SelectObject(memDC,bmp);
         FillRect(memDC,&ps.rcPaint,(HBRUSH)(COLOR_WINDOW + 23));
         POINT coordinates[2];
-        for(int i=0;i<MainE.size+1;i++)
+        for(int f=0;f<Mainsize+1;f++)
         {
-            coordinates[0].x=MainE.MassCor[i].x;
-            coordinates[0].y=MainE.MassCor[i].y;
-            coordinates[1].x=MainE.MassCor[i].x1;
-            coordinates[1].y=MainE.MassCor[i].y1;
-            updateColor(memDC,MainE.MassCor[i].color,MainE.colorIn);
+          for(int i=0;i<MainMas[f].size+1;i++)
+          {
+            coordinates[0]=MainMas[f].MassCor[i].xy;
+            coordinates[1]=MainMas[f].MassCor[i].x1y1;
+            updateColor(memDC,MainMas[f].color,MainMas[f].colorIn);
             if (i!=0)
             {
-                coordinates[0].x=MainE.MassCor[i-1].x1;
-                coordinates[0].y=MainE.MassCor[i-1].y1;
-                DrawLine(memDC,coordinates);
+              coordinates[0]=MainMas[f].MassCor[i-1].x1y1;
+              DrawLine(memDC,coordinates);
             }
             else
             {
-                DrawLine(memDC,coordinates);
+              DrawLine(memDC,coordinates);
             }
-                DrawLine(memDC,coordinates);
-        }
-        if(MainE.DRAW==TRUE)
-        {
-            updateColor(hdc,MainE.MassCor->color,MainE.colorIn);
-            POINT ptPoints[MainE.size+1];
-            for(int a=0;a<MainE.size+1;a++)
+          }
+          if(MainMas[f].DRAW==TRUE)
+          {
+            POINT ptPoints[MainMas[f].size+1];
+            for(int a=0;a<MainMas[f].size+1;a++)
             {
-                ptPoints[a].x=MainE.MassCor[a].x;
-                ptPoints[a].y=MainE.MassCor[a].y;
+              ptPoints[a]=MainMas[f].MassCor[a].xy;
             }
             Polygon(memDC, ptPoints,sizeof ptPoints / sizeof ptPoints[0]);
+          }
         }
         BitBlt(hdc,0,0,rcClientRect.right,rcClientRect.bottom,memDC,0,0,SRCCOPY);
         DeleteObject(bmp);
         DeleteDC(memDC);
         EndPaint(hwnd,&ps);
-    }
-    else if (flag==0)
-    {
-        HDC hdc = BeginPaint(hwnd,&ps);
-        FillRect(hdc,&ps.rcPaint,(HBRUSH)(COLOR_WINDOW + 23));
-        POINT ptPoints[MainE.size+1];
-        for(int a=0;a<MainE.size+1;a++)
-        {
-          ptPoints[a].x=MainE.MassCor[a].x;
-          ptPoints[a].y=MainE.MassCor[a].y;
-        }
-        if(MainE.DRAW==FALSE)
-        {
-          updateColor(hdc,MainE.MassCor->color,RGB(185,209,234));
-        }
-        else
-        {
-          updateColor(hdc,MainE.MassCor->color,MainE.colorIn);
-        }
-        Polygon(hdc, ptPoints,sizeof ptPoints / sizeof ptPoints[0]);
-            
-
-
-        EndPaint(hwnd,&ps);
-    }
-    break;
+      }
+      break;
     }
     case WM_ERASEBKGND:
     {
@@ -432,51 +386,41 @@ void DrawLine(HDC hdc,POINT coor[2])
 
 BOOL intersection(POINT c[4])
 {
-  double ax1=c[0].x;
-  double ay1=c[0].y;
-  double ax2=c[1].x;
-  double ay2=c[1].y;
-  double bx1=c[2].x;
-  double by1=c[2].y;
-  double bx2=c[3].x;
-  double by2=c[3].y;
-  double v1=(bx2-bx1)*(ay1-by1)-(by2-by1)*(ax1-bx1);
-  double v2=(bx2-bx1)*(ay2-by1)-(by2-by1)*(ax2-bx1);
-  double v3=(ax2-ax1)*(by1-ay1)-(ay2-ay1)*(bx1-ax1);
-  double v4=(ax2-ax1)*(by2-ay1)-(ay2-ay1)*(bx2-ax1);
+  double v1=(c[3].x-c[2].x)*(c[0].y-c[2].y)-(c[3].y-c[2].y)*(c[0].x-c[2].x);
+  double v2=(c[3].x-c[2].x)*(c[1].y-c[2].y)-(c[3].y-c[2].y)*(c[1].x-c[2].x);
+  double v3=(c[1].x-c[0].x)*(c[2].y-c[0].y)-(c[1].y-c[0].y)*(c[2].x-c[0].x);
+  double v4=(c[1].x-c[0].x)*(c[3].y-c[0].y)-(c[1].y-c[0].y)*(c[3].x-c[0].x);
   return ((v1*v2<=0) && (v3*v4<=0));
-}
+} 
 
 COLORREF GetColorIn()
 {
   CHAR editText1[1],editText2[1],editText3[1];
-  GetWindowText(edit1, editText1 ,4);
+  GetWindowText(HWNDMas[8], editText1 ,4);
   int REDIT=atoi (editText1);
   REDIT%256;
-  GetWindowText(edit2, editText2 ,4);
+  GetWindowText(HWNDMas[9], editText2 ,4);
   int GEDIT=atoi (editText2);
   GEDIT%256;
-  GetWindowText(edit3, editText3 ,4);
+  GetWindowText(HWNDMas[10], editText3 ,4);
   int BEDIT=atoi (editText3);
   BEDIT%256;
-  COLORREF Color = RGB(REDIT,GEDIT,BEDIT);
-  return Color;
+  return RGB(REDIT,GEDIT,BEDIT);
 }
 
 COLORREF GetColor()
 {
   CHAR editText1[1],editText2[1],editText3[1];
-  GetWindowText(edit4, editText1 ,4);
+  GetWindowText(HWNDMas[11], editText1 ,4);
   int REDIT=atoi (editText1);
   REDIT%256;
-  GetWindowText(edit5, editText2 ,4);
+  GetWindowText(HWNDMas[12], editText2 ,4);
   int GEDIT=atoi (editText2);
   GEDIT%256;
-  GetWindowText(edit6, editText3 ,4);
+  GetWindowText(HWNDMas[13], editText3 ,4);
   int BEDIT=atoi (editText3);
   BEDIT%256;
-  COLORREF Color = RGB(REDIT,GEDIT,BEDIT);
-  return Color;
+  return RGB(REDIT,GEDIT,BEDIT);
 }
 
 void FreeTool() 
@@ -487,25 +431,73 @@ void FreeTool()
 
 void updateColor(HDC hdc,COLORREF Color,COLORREF ColorIn) 
 {
-  FreeTool();
-  pen = CreatePen(PS_SOLID, 10, Color);
+  DeleteObject(pen);
+  DeleteObject(brush);
+  pen = CreatePen(PS_SOLID, 5, Color);
   brush = CreateSolidBrush(ColorIn);
   SelectObject(hdc, pen);
   SelectObject(hdc, brush);
 }
-
-void Drawer(HDC hdc,int x,int y,COLORREF GetColor,COLORREF GetColorIn)
+void ShowInputForDrawing()
 {
-  COLORREF Background = GetPixel(hdc,x,y);
-  SetPixel(hdc,x,y,GetColorIn);
-  if (Background==GetColorIn||Background==GetColor)
+  if (Condition!=One)
   {
-    return;
+    for(int i=0;i<16;i++)
+    {
+      ShowWindow(HWNDMas[i],SW_HIDE);
+    }
   }
-  Drawer(hdc,x,y-1,GetColor,GetColorIn);
-  Drawer(hdc,x-1,y,GetColor,GetColorIn);
-  Drawer(hdc,x,y+1,GetColor,GetColorIn);
-  Drawer(hdc,x+1,y,GetColor,GetColorIn);
+  else
+  {
+    for(int i=0;i<16;i++)
+    {
+      ShowWindow(HWNDMas[i],SW_SHOW);
+    }
+  }
+}
+
+void Drawer(HDC hdc,COLORREF GetColor,HWND hwnd, int f)
+{
+  int left = MainMas[f].MassCor[0].xy.x;
+  int right = MainMas[f].MassCor[0].xy.x;
+  int top = MainMas[f].MassCor[0].xy.y;
+  int bot = MainMas[f].MassCor[0].xy.y;
+  for (int i=0; i <= MainMas[f].size; i++)
+  {
+    if (MainMas[f].MassCor[i].xy.x < left) left = MainMas[f].MassCor[i].xy.x;
+    else if (MainMas[f].MassCor[i].xy.x > right) right = MainMas[f].MassCor[i].xy.x;
+    if (MainMas[f].MassCor[i].xy.y < top) top = MainMas[f].MassCor[i].xy.y;
+    else if (MainMas[f].MassCor[i].xy.y > bot) bot = MainMas[f].MassCor[i].xy.y;
+  }
+  RECT rcClientRect;
+  GetClientRect(hwnd, &rcClientRect);
+  POINT c[4];
+  c[0].x=left;
+  c[0].y=top;
+  c[1].x=rcClientRect.right+1;
+  c[1].y=rcClientRect.bottom+1;
+  for (int i1 = left; i1 < right; i1++)
+  {
+    for (int j1 = top; j1 < bot; j1++)
+    {
+      int colper=0;
+      c[0].x=i1;
+      c[0].y=j1;
+      for(int i=0;i<MainMas[f].size+1;i++)
+      {
+        c[2]=MainMas[f].MassCor[i].xy;
+        c[3]=MainMas[f].MassCor[i].x1y1;
+        if(intersection(c)==TRUE)
+        {
+          colper+=1;
+        }
+      }
+      if (colper%2!=0) 
+      {
+        SetPixel(hdc, i1, j1, GetColor);
+      }
+    }
+  }
 }
 
 LRESULT CALLBACK WndProcChild(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
@@ -517,7 +509,7 @@ LRESULT CALLBACK WndProcChild(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
       char str[11],str1[11];
       ListBox = CreateWindow("listbox", NULL,WS_CHILD | WS_VISIBLE | LBS_STANDARD |LBS_WANTKEYBOARDINPUT,30, 20, 300, 400,hwnd, (HMENU) list_id, NULL, NULL);
       HWND DRAW_btn =  CreateWindow("button", "DRAW", WS_VISIBLE | WS_CHILD | WS_BORDER | BS_DEFPUSHBUTTON , 130, 425, 100, 20, hwnd, (HMENU)button_id3, NULL, NULL);
-      for(int i=0;i<Mainsize;i++)
+      for(int i=0;i<Archivesize;i++)
       {
         strcpy(str1,"Figure-");
         sprintf(str, "%d", i+1);
@@ -536,20 +528,20 @@ LRESULT CALLBACK WndProcChild(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
       if (DefaultS)
       {
         int minX=1100,minY=720;
-        if(MainMas[Ind].DRAW==FALSE)
+        if(ArchiveMas[Ind].DRAW==FALSE)
         {
-          updateColor(hdc,MainMas[Ind].MassCor->color,RGB(185,209,234));
+          updateColor(hdc,ArchiveMas[Ind].color,RGB(185,209,234));
         }
         else
         {
-          updateColor(hdc,MainMas[Ind].MassCor->color,MainMas[Ind].colorIn);
+          updateColor(hdc,ArchiveMas[Ind].color,ArchiveMas[Ind].colorIn);
         }
-        for(int a=0;a<MainMas[Ind].size+1;a++)
+        for(int a=0;a<ArchiveMas[Ind].size+1;a++)
         {
-          int x = MainMas[Ind].MassCor[a].x;
-          int x1= MainMas[Ind].MassCor[a].x1;
-          int y = MainMas[Ind].MassCor[a].y;
-          int y1= MainMas[Ind].MassCor[a].y1;
+          int x = ArchiveMas[Ind].MassCor[a].xy.x;
+          int x1= ArchiveMas[Ind].MassCor[a].x1y1.x;
+          int y = ArchiveMas[Ind].MassCor[a].xy.x;
+          int y1= ArchiveMas[Ind].MassCor[a].x1y1.y;
           if (x<minX)
           {
             minX=x;
@@ -566,16 +558,14 @@ LRESULT CALLBACK WndProcChild(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
           {
             minY=y1;
           }
-
         }
-        POINT ptPoints[MainMas[Ind].size+1];
-        for(int a=0;a<MainMas[Ind].size+1;a++)
+        POINT ptPoints[ArchiveMas[Ind].size+1];
+        for(int a=0;a<ArchiveMas[Ind].size+1;a++)
         {
-          ptPoints[a].x=MainMas[Ind].MassCor[a].x-minX+400;
-          ptPoints[a].y=MainMas[Ind].MassCor[a].y-minY+100;
+          ptPoints[a].x=ArchiveMas[Ind].MassCor[a].xy.x-minX+400;
+          ptPoints[a].y=ArchiveMas[Ind].MassCor[a].xy.y-minY+100;
         }
         Polygon(hdc, ptPoints,sizeof ptPoints / sizeof ptPoints[0]);
-        
       }
       EndPaint(hwnd,&ps);
       break;
@@ -585,22 +575,23 @@ LRESULT CALLBACK WndProcChild(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
       if (LOWORD(wParam)==button_id3)
       {
         HDC hdc = GetDC (hwndMain);
-        POINT ptPoints[MainMas[Ind].size+1];
-        for(int a=0;a<MainMas[Ind].size+1;a++)
+        POINT ptPoints[ArchiveMas[Ind].size+1];
+        for(int a=0;a<ArchiveMas[Ind].size+1;a++)
         {
-          ptPoints[a].x=MainMas[Ind].MassCor[a].x;
-          ptPoints[a].y=MainMas[Ind].MassCor[a].y;
+          ptPoints[a].x=ArchiveMas[Ind].MassCor[a].xy.x;
+          ptPoints[a].y=ArchiveMas[Ind].MassCor[a].xy.y;
         }
-        if(MainMas[Ind].DRAW==FALSE)
+        if(ArchiveMas[Ind].DRAW==FALSE)
         {
-          updateColor(hdc,MainMas[Ind].MassCor->color,RGB(185,209,234));
+          updateColor(hdc,ArchiveMas[Ind].color,RGB(185,209,234));
         }
         else
         {
-          updateColor(hdc,MainMas[Ind].MassCor->color,MainMas[Ind].colorIn);
+          updateColor(hdc,ArchiveMas[Ind].color,ArchiveMas[Ind].colorIn);
         }
         Polygon(hdc, ptPoints,sizeof ptPoints / sizeof ptPoints[0]);
-        MainE=MainMas[Ind];
+        MainMas[Mainsize]=ArchiveMas[Ind];
+        Mainsize++;
         RECT rcClientRect;
         GetClientRect(hwndMain, &rcClientRect);
         rcClientRect.top=60;
@@ -619,7 +610,6 @@ LRESULT CALLBACK WndProcChild(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
         {
           Ind--;
         }
-        printf("UP:%d\n",Ind);
         RECT rcClientRect;
         GetClientRect(hwnd, &rcClientRect);
         rcClientRect.left=335;
@@ -638,27 +628,12 @@ LRESULT CALLBACK WndProcChild(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
         {
           Entry=TRUE;
         }
-        
-        printf("DOWN:%d\n",Ind);
-         printf("amount:%d\n",amount);
-        /* Ind--;
-         printf("\nMAinDOWN:%d\n",Ind);*/
         RECT rcClientRect;
         GetClientRect(hwnd, &rcClientRect);
         rcClientRect.left=335;
         InvalidateRect(hwnd,&rcClientRect,1);
         SetFocus(ListBox);
       }    
-      /*if (LOWORD(wParam) == VK_RETURN)
-      {
-        DefaultS=TRUE;
-        Ind = SendMessage(ListBox, LB_GETCARETINDEX, NULL,NULL);
-        RECT rcClientRect;
-        GetClientRect(hwnd, &rcClientRect);
-        rcClientRect.left=335;
-        InvalidateRect(hwnd,&rcClientRect,1);
-        SetFocus(ListBox);
-      }*/
       break;
     }
     case WM_MOVE:
@@ -667,7 +642,6 @@ LRESULT CALLBACK WndProcChild(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
       GetClientRect(hwnd, &rcClientRect);
       rcClientRect.top=60;
       InvalidateRect(hwndMain,&rcClientRect,1);
-      flag=0;
       SetFocus(ListBox);
       break;
     }
