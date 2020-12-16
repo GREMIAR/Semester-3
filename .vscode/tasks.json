@@ -12,6 +12,9 @@
 				"-o",
 				"${fileDirname}\\${fileBasenameNoExtension}.o"
 			],
+            "presentation": {
+                "clear": true
+            },
 			"options": {
 				"cwd": "${workspaceFolder}"
 			}
@@ -25,7 +28,9 @@
 				"${fileBasenameNoExtension}",
 				"${fileDirname}\\${fileBasenameNoExtension}.o",
 				"-lgdi32",
-				"-lcomdlg32"
+				"-lcomdlg32",
+				"-lcomctl32",
+				 "-luxtheme"
 			],
 			"options": {
 				"cwd": "${workspaceFolder}"

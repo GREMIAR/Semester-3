@@ -118,6 +118,15 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
         {
           MainMas[Mainsize].MassCor[MainMas[Mainsize].size].xy=MainMas[Mainsize].MassCor[MainMas[Mainsize].size-1].x1y1;
         }
+        HDC hdc = GetDC (hwnd);
+        POINT coordinates[2];
+        updateColor(hdc,MainMas[Mainsize].color,GetColorIn());
+        coordinates[0].x=MainMas[Mainsize].MassCor[MainMas[Mainsize].size].xy.x;
+        coordinates[0].y=MainMas[Mainsize].MassCor[MainMas[Mainsize].size].xy.y;
+        coordinates[1].x=LOWORD(lParam);
+        coordinates[1].y=HIWORD(lParam);
+        DrawLine(hdc,coordinates);
+        DeleteObject(hdc);
         Condition=Three;
       }
       break;
@@ -128,9 +137,8 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
       {
         POINT c[4];
         c[0]=MainMas[Mainsize].MassCor[MainMas[Mainsize].size].xy;
-        MainMas[Mainsize].MassCor[MainMas[Mainsize].size].x1y1.x=LOWORD(lParam);
-        MainMas[Mainsize].MassCor[MainMas[Mainsize].size].x1y1.y=HIWORD(lParam);
-        c[1]=MainMas[Mainsize].MassCor[MainMas[Mainsize].size].x1y1;
+        c[1].x=LOWORD(lParam);
+        c[1].y=HIWORD(lParam);
         for(int i=0;i<MainMas[Mainsize].size-1;i++)
         {
           c[2]=MainMas[Mainsize].MassCor[i].xy;
@@ -150,6 +158,8 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
           Condition=Two;
           return 1;
         }
+        MainMas[Mainsize].MassCor[MainMas[Mainsize].size].x1y1.x=c[1].x;
+        MainMas[Mainsize].MassCor[MainMas[Mainsize].size].x1y1.y=c[1].y;
         HDC hdc = GetDC (hwnd);
         updateColor(hdc,MainMas[Mainsize].color,GetColorIn());
         MoveToEx(hdc, MainMas[Mainsize].MassCor[MainMas[Mainsize].size].xy.x, MainMas[Mainsize].MassCor[MainMas[Mainsize].size].xy.y, NULL);
@@ -268,6 +278,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
       PAINTSTRUCT ps;
       if((Condition!=Two))
       {
+        printf("%d",LOWORD(lParam));
         HDC hdc = BeginPaint(hwnd,&ps);
         HDC memDC = CreateCompatibleDC(hdc);
         RECT rcClientRect;
