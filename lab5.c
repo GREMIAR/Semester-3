@@ -23,7 +23,7 @@ HPEN pen;
 HBRUSH brush;
 int Mainsize;
 HWND HWNDMas[14];
-void Drawer(HDC hdc,COLORREF GetColor,HWND hwnd, int f);
+void Drawer(HDC hdc,COLORREF GetColor, int f);
 void FreeTool();
 void DrawLine(HDC hdc,POINT coor[2]);
 void updateColor(HDC hdc,COLORREF Color,COLORREF ColorIn);
@@ -35,28 +35,28 @@ void ShowInputForDrawing();
 void MoveConditionInd(int Obj);
 
 // 1 - плюс, 2 - минус, 0 - ничего
-int TableOfConditionContects[10][5] = {{1,0,1,1,1},
-                                    {1,0,1,1,1},
-                                    {1,0,2,2,1},
-                                    {1,0,2,2,1},
-                                    {1,0,2,2,1},
-                                    {0,1,0,0,0},
-                                    {1,0,2,0,0},
-                                    {1,0,2,2,1},
-                                    {0,2,2,2,1},
-                                    {0,0,0,0,0}};
+int TableConditionContects[10][5] =  {{1,0,1,1,1},
+                                      {1,0,1,1,1},
+                                      {1,0,2,2,1},
+                                      {1,0,2,2,1},
+                                      {1,0,2,2,1},
+                                      {0,1,0,0,0},
+                                      {1,0,2,0,0},
+                                      {1,0,2,2,1},
+                                      {0,2,2,2,1},
+                                      {0,0,0,0,0}};
 
-LPCTSTR tableOfState[10][9] = {{"","set color","","","","","","",""},
+LPCTSTR TableCondition[10][10] = {{"","set color","","","","","","",""},
                            {"","set color","","","","","","",""},
                            {"","drawing first line","save first, set second","","","","","",""},
-                           {"","","","confirm","","","","",""},//confirm 3 3 
+                           {"","","","confirm","","","","",""},
                            {"","","","change second","","","","",""},
-                           {"","set fill point","set locking","","","","","",""},//set fill point 5 1
+                           {"","set fill point","set locking","","","","","",""},
                            {"","","","","","close errorwnd", "", "", "close errorwnd"},
                            {"","","","","set line", "", "locking", "draw fill", ""},
                            {"","","","","show errorwnd", "", "show errorwnd", "show errorwnd", ""},
                            {"","quit","quit", "quit","quit","","quit","quit",""}};
-int TableOfMove[10][10] =      {{0,1,0,0,0,0,0,0,0}, 
+int TableMove[10][10] =        {{0,1,0,0,0,0,0,0,0}, 
                                 {0,1,0,0,0,0,0,0,0},
                                 {0,2,3,0,0,0,0,0,0},
                                 {0,0,0,4,0,0,0,0,0},
@@ -70,7 +70,9 @@ int TableOfMove[10][10] =      {{0,1,0,0,0,0,0,0,0},
 
 int ConditionInd;
 int Object;
+
 enum stateDraw{
+  Stop,
   One,//Главное окно отображено
   Two,//Добавлен элемент фигуры
   Three,
@@ -116,7 +118,6 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
   {
     case WM_CREATE:
     {
-      ConditionInd=0;
       HWNDMas[0] = CreateWindow("static", "Color RGB", WS_VISIBLE | WS_CHILD, 80, 15, 75, 20, hwnd, NULL, NULL, NULL);
       HWNDMas[1] = CreateWindow("static", "R", WS_VISIBLE | WS_CHILD, 50, 40, 12, 15, hwnd, NULL, NULL, NULL);
       HWNDMas[2] = CreateWindow("static", "G", WS_VISIBLE | WS_CHILD, 100, 40, 12, 15, hwnd, NULL, NULL, NULL);
@@ -136,7 +137,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
     case WM_LBUTTONDOWN:
     { 
       Object=2;
-      if (ConditionInd==1)
+      if (ConditionInd==One)
       {
         MainMas[Mainsize].MassCor[MainMas[Mainsize].size].xy.x=LOWORD(lParam);
         MainMas[Mainsize].MassCor[MainMas[Mainsize].size].xy.y=HIWORD(lParam);
@@ -151,9 +152,9 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
         ShowInputForDrawing();
         MoveConditionInd(Object);
       }
-      else if(ConditionInd==2)
+      else if(ConditionInd==Two)
       {
-        if(MainMas[Mainsize].size-1>=0)
+        if(MainMas[Mainsize].size!=0)
         {
           MainMas[Mainsize].MassCor[MainMas[Mainsize].size].xy=MainMas[Mainsize].MassCor[MainMas[Mainsize].size-1].x1y1;
         }
@@ -173,7 +174,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
     case WM_LBUTTONUP:
     {
       Object=3;
-      if (ConditionInd==3)
+      if (ConditionInd==Three)
       {
         POINT c[4];
         c[0]=MainMas[Mainsize].MassCor[MainMas[Mainsize].size].xy;
@@ -194,7 +195,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
             return 1;
           }
         }
-        if(MainMas[Mainsize].MassCor[MainMas[Mainsize].size].xy.x==MainMas[Mainsize].MassCor[MainMas[Mainsize].size].x1y1.x||MainMas[Mainsize].MassCor[MainMas[Mainsize].size].xy.y==MainMas[Mainsize].MassCor[MainMas[Mainsize].size].x1y1.y)
+        if(MainMas[Mainsize].MassCor[MainMas[Mainsize].size].xy.x==c[1].x||MainMas[Mainsize].MassCor[MainMas[Mainsize].size].xy.y==c[1].y)
         {
           Object=8;
           MoveConditionInd(Object);
@@ -219,7 +220,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
     case WM_MOUSEMOVE:
     {
       Object=4;
-      if(ConditionInd==3)
+      if(ConditionInd==Three)
       {
         MainMas[Mainsize].MassCor[MainMas[Mainsize].size].x1y1.x=LOWORD(lParam);
         MainMas[Mainsize].MassCor[MainMas[Mainsize].size].x1y1.y=HIWORD(lParam);
@@ -230,7 +231,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
     case WM_RBUTTONDOWN:
     {
       Object=5;
-      if (ConditionInd==2)
+      if (ConditionInd==Two)
       {
         MainMas[Mainsize].MassCor[MainMas[Mainsize].size].xy=MainMas[Mainsize].MassCor[MainMas[Mainsize].size-1].x1y1;
         MainMas[Mainsize].MassCor[MainMas[Mainsize].size].x1y1=MainMas[Mainsize].MassCor[0].xy;
@@ -261,7 +262,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
         ShowInputForDrawing();
         MoveConditionInd(Object);
       }
-      else if(ConditionInd==1)
+      else if(ConditionInd==One)
       {
         MoveConditionInd(Object);
         RECT rcClientRect;
@@ -283,7 +284,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
             {
               c[2]=MainMas[f].MassCor[i].xy;
               c[3]=MainMas[f].MassCor[i].x1y1;
-              if(intersection(c)==TRUE)
+              if(intersection(c))
               {
                 colper+=1;
               }
@@ -292,37 +293,29 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
             {
               MainMas[f].DRAW=TRUE;
               MainMas[f].colorIn=GetColorIn();
-              Found=TRUE;
-              break;
+              Object=7;
+              MoveConditionInd(Object);
+              Drawer(hdc,MainMas[f].colorIn,f);
+              DeleteObject(hdc);
+              return 1;
             }
             colper=0;
           }
         }
-        if(Found)
-        {
-          Object=7;
-          MoveConditionInd(Object);
-          updateColor(hdc,MainMas[f].color,RGB(185,209,234));
-          Drawer(hdc,MainMas[f].colorIn, hwnd,f);
-          DeleteObject(hdc);
-        }
-        else
-        {
-          Object=8;
-          MoveConditionInd(Object);
-          MessageBox(hwnd,"You didn't get anywhere","Error", MB_OK|MB_APPLMODAL);
-          Object=6;
-          MoveConditionInd(Object);
-        }
+        Object=8;
+        MoveConditionInd(Object);
+        MessageBox(hwnd,"You didn't get anywhere","Error", MB_OK|MB_APPLMODAL);
+        Object=6;
+        MoveConditionInd(Object);
       }
       break;
     }
     case WM_PAINT:
     {
       PAINTSTRUCT ps;
-      if(ConditionInd==3)
+      HDC hdc = BeginPaint(hwnd,&ps);
+      if(ConditionInd==Three)
       {
-        HDC hdc = BeginPaint(hwnd,&ps);
         HDC memDC = CreateCompatibleDC(hdc);
         RECT rcClientRect;
         GetClientRect( hwnd, &rcClientRect );
@@ -347,7 +340,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
               DrawLine(memDC,coordinates);
             }
           }
-          if(MainMas[f].DRAW==TRUE)
+          if(MainMas[f].DRAW)
           {
             POINT ptPoints[MainMas[f].size+1];
             for(int a=0;a<MainMas[f].size+1;a++)
@@ -360,20 +353,13 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
         BitBlt(hdc,0,0,rcClientRect.right,rcClientRect.bottom,memDC,0,0,SRCCOPY);
         DeleteObject(bmp);
         DeleteDC(memDC);
-        EndPaint(hwnd,&ps);
       }
       else if (ConditionInd==0)
       {
-        HDC hdc = BeginPaint(hwnd,&ps);
         ConditionInd=1;
         FillRect(hdc,&ps.rcPaint,(HBRUSH)(COLOR_WINDOW + 23));
-        EndPaint(hwnd,&ps);
       }
-      else if (TRUE)
-      {
-        HDC hdc = BeginPaint(hwnd,&ps);
-        EndPaint(hwnd,&ps);
-      }
+      EndPaint(hwnd,&ps);
       break;
     }
     case WM_ERASEBKGND:
@@ -453,7 +439,7 @@ void updateColor(HDC hdc,COLORREF Color,COLORREF ColorIn)
 }
 void ShowInputForDrawing()
 {
-  if (TableOfConditionContects[ConditionInd][3]==1)
+  if (TableConditionContects[ConditionInd][3]==1)
   {
     for(int i=0;i<14;i++)
     {
@@ -469,7 +455,7 @@ void ShowInputForDrawing()
   }
 }
 
-void Drawer(HDC hdc,COLORREF GetColor,HWND hwnd, int f)
+void Drawer(HDC hdc,COLORREF GetColor, int f)
 {
   int left = MainMas[f].MassCor[0].xy.x;
   int right = MainMas[f].MassCor[0].xy.x;
@@ -482,25 +468,26 @@ void Drawer(HDC hdc,COLORREF GetColor,HWND hwnd, int f)
     if (MainMas[f].MassCor[i].xy.y < top) top = MainMas[f].MassCor[i].xy.y;
     else if (MainMas[f].MassCor[i].xy.y > bot) bot = MainMas[f].MassCor[i].xy.y;
   }
-  RECT rcClientRect;
-  GetClientRect(hwnd, &rcClientRect);
   POINT c[4];
+  left++;
+  top++;
   c[0].x=left;
   c[0].y=top;
-  c[1].x=rcClientRect.right+1;
-  c[1].y=rcClientRect.bottom+1;
+  c[1].x=right;
+  c[1].y=bot;
+  int colper;
   for (int i1 = left; i1 < right; i1++)
   {
+    c[0].x=i1;
     for (int j1 = top; j1 < bot; j1++)
     {
-      int colper=0;
-      c[0].x=i1;
+      colper=0;
       c[0].y=j1;
       for(int i=0;i<MainMas[f].size+1;i++)
       {
         c[2]=MainMas[f].MassCor[i].xy;
         c[3]=MainMas[f].MassCor[i].x1y1;
-        if(intersection(c)==TRUE)
+        if(intersection(c))
         {
           colper+=1;
         }
@@ -515,5 +502,5 @@ void Drawer(HDC hdc,COLORREF GetColor,HWND hwnd, int f)
 
 void MoveConditionInd(int Obj)
 {
-  ConditionInd = TableOfMove[Obj][ConditionInd];
+  ConditionInd = TableMove[Obj][ConditionInd];
 }
