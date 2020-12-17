@@ -36,8 +36,7 @@ HBRUSH brush;
 int Mainsize;
 int Archivesize;
 HWND HWNDMas[16];
-void Drawer(HDC hdc,COLORREF GetColor, int f);
-void Drawer2(HDC hdc, COLORREF GetColor, struct MainPoly tmp);
+void Drawer(HDC hdc, COLORREF GetColor, struct MainPoly tmp);
 void FreeTool();
 void DrawLine(HDC hdc,POINT coor[2]);
 void updateColor(HDC hdc,COLORREF Color,COLORREF ColorIn);
@@ -47,11 +46,10 @@ void RegClass(WNDPROC,LPCTSTR);
 BOOL intersection(POINT c[4]);
 void ShowInputForDrawing();
 void MoveConditionInd(int Obj);
-void refreshbuttons(HWND hwnd);
 
 
 // 1 - плюс, 2 - минус, 0 - ничего
-int TableConditionContects[10][5] =  {{1,0,1,1,1},
+int TableConditionContects[10][5] =  {{1,0,1,1,1,1,1},
                                       {1,0,1,1,1},
                                       {1,0,2,2,1},
                                       {1,0,2,2,1},
@@ -60,7 +58,13 @@ int TableConditionContects[10][5] =  {{1,0,1,1,1},
                                       {1,0,2,0,0},
                                       {1,0,2,2,1},
                                       {0,2,2,2,1},
-                                      {0,0,0,0,0}};
+                                      {0,0,0,0,0},
+                                      {0,0,0,0,0},
+                                      {0,0,0,0,0},
+                                      {0,0,0,0,0},
+                                      {0,0,0,0,0},
+                                      {0,0,0,0,0},
+                                      {0,0,0,0,0},};
 
 LPCTSTR TableCondition[10][10] = {{"","set color","","","","","","",""},
                            {"","set color","","","","","","",""},
@@ -134,20 +138,33 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
   {
     case WM_CREATE:
     {
+      RegClass(WndProcChild,"ChildWin");
       RECT r1;
       GetClientRect(hwnd, &r1);
-      int scaling_width = (r1.right)/1000;
-      int scaling_height = (r1.bottom)/500;
-      RegClass(WndProcChild,"ChildWin");
-      refreshbuttons(hwnd);
+      float scaling_width = ((float)(r1.right))/((float)1100);
+      float scaling_height = ((float)(r1.bottom))/((float)1040);
+      HWNDMas[0] = CreateWindow("static", "Color RGB", WS_VISIBLE | WS_CHILD, scaling_width*80, 15, 75, 20, hwnd, NULL, NULL, NULL);
+      HWNDMas[1] = CreateWindow("static", "R", WS_VISIBLE | WS_CHILD, scaling_width*50, 40, 12, 15, hwnd, NULL, NULL, NULL);
+      HWNDMas[2] = CreateWindow("static", "G", WS_VISIBLE | WS_CHILD, scaling_width*100, 40, 12, 15, hwnd, NULL, NULL, NULL);
+      HWNDMas[3] = CreateWindow("static", "B", WS_VISIBLE | WS_CHILD, scaling_width*150, 40, 12, 15, hwnd, NULL, NULL, NULL);
+      HWNDMas[4] = CreateWindow("static", "Color RGB in", WS_VISIBLE | WS_CHILD, scaling_width*915, 15, 90, 20, hwnd, NULL, NULL, NULL);
+      HWNDMas[5] = CreateWindow("static", "R", WS_VISIBLE | WS_CHILD, scaling_width*885, 40, 12, 15, hwnd, NULL, NULL, NULL);
+      HWNDMas[6] = CreateWindow("static", "G", WS_VISIBLE | WS_CHILD, scaling_width*935, 40, 12, 15, hwnd, NULL, NULL, NULL);
+      HWNDMas[7] = CreateWindow("static", "B", WS_VISIBLE | WS_CHILD, scaling_width*985, 40, 12, 15, hwnd, NULL, NULL, NULL);
+      HWNDMas[8] = CreateWindow("edit", NULL, WS_VISIBLE | WS_CHILD | WS_BORDER | ES_NUMBER , scaling_width*65, 38, 30, 20, hwnd, NULL, NULL, NULL);
+      HWNDMas[9] = CreateWindow("edit", NULL, WS_VISIBLE | WS_CHILD | WS_BORDER | ES_NUMBER , scaling_width*115, 38, 30, 20, hwnd, NULL, NULL, NULL);
+      HWNDMas[10]= CreateWindow("edit", NULL, WS_VISIBLE | WS_CHILD | WS_BORDER | ES_NUMBER , scaling_width*165, 38, 30, 20, hwnd, NULL, NULL, NULL);
+      HWNDMas[11]= CreateWindow("edit", NULL, WS_VISIBLE | WS_CHILD | WS_BORDER | ES_NUMBER , scaling_width*900, 38, 30, 20, hwnd, NULL, NULL, NULL);
+      HWNDMas[12]= CreateWindow("edit", NULL, WS_VISIBLE | WS_CHILD | WS_BORDER | ES_NUMBER , scaling_width*950, 38, 30, 20, hwnd, NULL, NULL, NULL);
+      HWNDMas[13]= CreateWindow("edit", NULL, WS_VISIBLE | WS_CHILD | WS_BORDER | ES_NUMBER , scaling_width*1000, 38, 30, 20, hwnd, NULL, NULL, NULL);
+      HWNDMas[14] =  CreateWindow("button", "Archive", WS_VISIBLE | WS_CHILD | WS_BORDER | BS_DEFPUSHBUTTON , scaling_width*430, 38, 100, 20, hwnd, (HMENU)button_id1, NULL, NULL);
+      HWNDMas[15] =  CreateWindow("button", "Clear", WS_VISIBLE | WS_CHILD | WS_BORDER | BS_DEFPUSHBUTTON , scaling_width*570, 38, 100, 20, hwnd, (HMENU)button_id2, NULL, NULL);
       break;
     }
     case WM_COMMAND:
     {
         if(LOWORD(wParam) == button_id1)
         {
-          RECT r1;
-          GetClientRect(hwnd, &r1);
           HWND hwnd1 = CreateWindow("ChildWin", "Window", WS_OVERLAPPEDWINDOW & ~WS_THICKFRAME & ~WS_MAXIMIZEBOX, 1100, 0, 820, 1040, hwnd, NULL, NULL, NULL);
           ShowWindow(hwnd1, SW_SHOWNORMAL);
         }
@@ -337,8 +354,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
               MainMas[f].colorIn=GetColorIn();
               Object=7;
               MoveConditionInd(Object);
-              //Drawer(hdc,MainMas[f].colorIn,f);
-              Drawer2(hdc, MainMas[f].colorIn, MainMas[f]);
+              Drawer(hdc, MainMas[f].colorIn, MainMas[f]);
               DeleteObject(hdc);
               ArchiveMas[Archivesize]=MainMas[f];
               Archivesize++;
@@ -500,52 +516,7 @@ void ShowInputForDrawing()
   }
 }
 
-void Drawer(HDC hdc,COLORREF GetColor, int f)
-{
-  int left = MainMas[f].MassCor[0].xy.x;
-  int right = MainMas[f].MassCor[0].xy.x;
-  int top = MainMas[f].MassCor[0].xy.y;
-  int bot = MainMas[f].MassCor[0].xy.y;
-  for (int i=0; i <= MainMas[f].size; i++)
-  {
-    if (MainMas[f].MassCor[i].xy.x < left) left = MainMas[f].MassCor[i].xy.x;
-    else if (MainMas[f].MassCor[i].xy.x > right) right = MainMas[f].MassCor[i].xy.x;
-    if (MainMas[f].MassCor[i].xy.y < top) top = MainMas[f].MassCor[i].xy.y;
-    else if (MainMas[f].MassCor[i].xy.y > bot) bot = MainMas[f].MassCor[i].xy.y;
-  }
-  POINT c[4];
-  left++;
-  top++;
-  c[0].x=left;
-  c[0].y=top;
-  c[1].x=right;
-  c[1].y=bot;
-  int colper;
-  for (int i1 = left; i1 < right; i1++)
-  {
-    c[0].x=i1;
-    for (int j1 = top; j1 < bot; j1++)
-    {
-      colper=0;
-      c[0].y=j1;
-      for(int i=0;i<MainMas[f].size+1;i++)
-      {
-        c[2]=MainMas[f].MassCor[i].xy;
-        c[3]=MainMas[f].MassCor[i].x1y1;
-        if(intersection(c))
-        {
-          colper+=1;
-        }
-      }
-      if (colper%2!=0) 
-      {
-        SetPixel(hdc, i1, j1, GetColor);
-      }
-    }
-  }
-}
-
-void Drawer2(HDC hdc, COLORREF GetColor, struct MainPoly tmp)
+void Drawer(HDC hdc, COLORREF GetColor, struct MainPoly tmp)
 {
   for (int dfg = 0; dfg < tmp.size+1; dfg++)
   {
@@ -614,7 +585,7 @@ LRESULT CALLBACK WndProcChild(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
     {
       EnableWindow(hwndMain, FALSE);
       char str[11],str1[11];
-      ListBox = CreateWindow("listbox", NULL,WS_CHILD | WS_VISIBLE | LBS_STANDARD |LBS_WANTKEYBOARDINPUT,20, 20, 250, 630,hwnd, (HMENU) list_id, NULL, NULL);
+      ListBox = CreateWindow("listbox", NULL,WS_CHILD | WS_VISIBLE | LBS_STANDARD |LBS_WANTKEYBOARDINPUT,5, 10, 280, 1005,hwnd, (HMENU) list_id, NULL, NULL);
       for(int i=0;i<Archivesize;i++)
       {
         strcpy(str1,"Figure-");
@@ -681,7 +652,7 @@ LRESULT CALLBACK WndProcChild(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
           Tmp.MassCor[zxc].x1y1.x=scaling_width*(Tmp.MassCor[zxc].x1y1.x)+300;
           Tmp.MassCor[zxc].x1y1.y=scaling_height*(Tmp.MassCor[zxc].x1y1.y);
         }
-        Drawer2(hdc, Tmp.colorIn, Tmp);
+        Drawer(hdc, Tmp.colorIn, Tmp);
 
       }
       EndPaint(hwnd,&ps);
@@ -689,19 +660,10 @@ LRESULT CALLBACK WndProcChild(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
     }
     case WM_VKEYTOITEM:
     {
-      if (wParam==VK_ESCAPE)
+      if (LOWORD(wParam) == VK_UP)
       {
-        EnableWindow(hwndMain, TRUE);
-        Entry=FALSE;
-        DestroyWindow(hwnd);
-        break;
-      }
-      else if (LOWORD(wParam) == VK_UP)
-      {
-        printf("%d",SendMessage(ListBox, LB_GETCOUNT, NULL,NULL));
         DefaultS=TRUE;
-        Ind = SendMessage(ListBox, LB_GETCARETINDEX, NULL,NULL);
-        printf("%d",Ind);
+        Ind = SendMessage(ListBox, LB_GETCARETINDEX, NULL,NULL);;
         if (Ind>0)
         {
           Ind--;
@@ -720,7 +682,6 @@ LRESULT CALLBACK WndProcChild(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
       }    
       else if  (LOWORD(wParam) == VK_DOWN)
       {
-        printf("%d",SendMessage(ListBox, LB_GETCOUNT, NULL,NULL));
         DefaultS=TRUE;
         Ind = SendMessage(ListBox, LB_GETCARETINDEX, NULL,NULL);
         if (Entry)
@@ -759,8 +720,7 @@ LRESULT CALLBACK WndProcChild(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
           updateColor(hdc,ArchiveMas[Ind].color,ArchiveMas[Ind].colorIn);
         }
         struct MainPoly tmp = ArchiveMas[Ind];
-        Drawer2(hdc,ArchiveMas[Ind].colorIn,tmp);
-
+        Drawer(hdc,ArchiveMas[Ind].colorIn,tmp);
         MainMas[Mainsize]=ArchiveMas[Ind];
         Mainsize++;
         RECT rcClientRect;
@@ -774,7 +734,7 @@ LRESULT CALLBACK WndProcChild(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
     case WM_MOVE:
     {
       SetFocus(ListBox);
-      return 0;
+      break;
     }
     case WM_CLOSE:
     {
@@ -789,30 +749,3 @@ LRESULT CALLBACK WndProcChild(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
   return DefWindowProcA(hwnd, msg, wParam, lParam);
 }
 
-void refreshbuttons(HWND hwnd)
-{
-  RECT r1;
-      GetClientRect(hwnd, &r1);
-      float scaling_width = ((float)(r1.right))/((float)1100);
-      float scaling_height = ((float)(r1.bottom))/((float)1040);
-      for (int asd = 0; asd < 16; asd++)
-      {
-        DestroyWindow(HWNDMas[asd]);
-      }
-      HWNDMas[0] = CreateWindow("static", "Color RGB", WS_VISIBLE | WS_CHILD, scaling_width*80, 15, 75, 20, hwnd, NULL, NULL, NULL);
-      HWNDMas[1] = CreateWindow("static", "R", WS_VISIBLE | WS_CHILD, scaling_width*50, 40, 12, 15, hwnd, NULL, NULL, NULL);
-      HWNDMas[2] = CreateWindow("static", "G", WS_VISIBLE | WS_CHILD, scaling_width*100, 40, 12, 15, hwnd, NULL, NULL, NULL);
-      HWNDMas[3] = CreateWindow("static", "B", WS_VISIBLE | WS_CHILD, scaling_width*150, 40, 12, 15, hwnd, NULL, NULL, NULL);
-      HWNDMas[4] = CreateWindow("static", "Color RGB in", WS_VISIBLE | WS_CHILD, scaling_width*915, 15, 90, 20, hwnd, NULL, NULL, NULL);
-      HWNDMas[5] = CreateWindow("static", "R", WS_VISIBLE | WS_CHILD, scaling_width*885, 40, 12, 15, hwnd, NULL, NULL, NULL);
-      HWNDMas[6] = CreateWindow("static", "G", WS_VISIBLE | WS_CHILD, scaling_width*935, 40, 12, 15, hwnd, NULL, NULL, NULL);
-      HWNDMas[7] = CreateWindow("static", "B", WS_VISIBLE | WS_CHILD, scaling_width*985, 40, 12, 15, hwnd, NULL, NULL, NULL);
-      HWNDMas[8] = CreateWindow("edit", NULL, WS_VISIBLE | WS_CHILD | WS_BORDER | ES_NUMBER , scaling_width*65, 38, 30, 20, hwnd, NULL, NULL, NULL);
-      HWNDMas[9] = CreateWindow("edit", NULL, WS_VISIBLE | WS_CHILD | WS_BORDER | ES_NUMBER , scaling_width*115, 38, 30, 20, hwnd, NULL, NULL, NULL);
-      HWNDMas[10]= CreateWindow("edit", NULL, WS_VISIBLE | WS_CHILD | WS_BORDER | ES_NUMBER , scaling_width*165, 38, 30, 20, hwnd, NULL, NULL, NULL);
-      HWNDMas[11]= CreateWindow("edit", NULL, WS_VISIBLE | WS_CHILD | WS_BORDER | ES_NUMBER , scaling_width*900, 38, 30, 20, hwnd, NULL, NULL, NULL);
-      HWNDMas[12]= CreateWindow("edit", NULL, WS_VISIBLE | WS_CHILD | WS_BORDER | ES_NUMBER , scaling_width*950, 38, 30, 20, hwnd, NULL, NULL, NULL);
-      HWNDMas[13]= CreateWindow("edit", NULL, WS_VISIBLE | WS_CHILD | WS_BORDER | ES_NUMBER , scaling_width*1000, 38, 30, 20, hwnd, NULL, NULL, NULL);
-      HWNDMas[14] =  CreateWindow("button", "Archive", WS_VISIBLE | WS_CHILD | WS_BORDER | BS_DEFPUSHBUTTON , scaling_width*430, 38, 100, 20, hwnd, (HMENU)button_id1, NULL, NULL);
-      HWNDMas[15] =  CreateWindow("button", "Clear", WS_VISIBLE | WS_CHILD | WS_BORDER | BS_DEFPUSHBUTTON , scaling_width*570, 38, 100, 20, hwnd, (HMENU)button_id2, NULL, NULL);
-}
