@@ -36,6 +36,7 @@ HBRUSH brush;
 int Mainsize;
 int Archivesize;
 HWND HWNDMas[16];
+BOOL opened = FALSE;
 void Drawer(HDC hdc,COLORREF GetColor, int f);
 void FreeTool();
 void DrawLine(HDC hdc,POINT coor[2]);
@@ -46,6 +47,7 @@ void RegClass(WNDPROC,LPCTSTR);
 BOOL intersection(POINT c[4]);
 void ShowInputForDrawing();
 void MoveConditionInd(int Obj);
+void refreshbuttons(HWND hwnd);
 
 
 // 1 - плюс, 2 - минус, 0 - ничего
@@ -103,7 +105,7 @@ enum stateDraw Condition;
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
 {
   RegClass(WndProc,"MainWin");
-  hwndMain = CreateWindow("MainWin", "Paint", WS_OVERLAPPEDWINDOW, 40, 40, 1100, 720, NULL, NULL, NULL, NULL);
+  hwndMain = CreateWindow("MainWin", "Paint", WS_OVERLAPPEDWINDOW & ~WS_THICKFRAME & ~WS_MAXIMIZEBOX, 40, 40, 1100, 720, NULL, NULL, NULL, NULL);
   ShowWindow(hwndMain, SW_SHOWNORMAL);
   MSG msg;
   while (GetMessage(&msg, NULL, 0, 0))
@@ -132,31 +134,26 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
   {
     case WM_CREATE:
     {
+      RECT r1;
+      GetClientRect(hwnd, &r1);
+      int scaling_width = (r1.right)/1000;
+      int scaling_height = (r1.bottom)/500;
       RegClass(WndProcChild,"ChildWin");
-      HWNDMas[0] = CreateWindow("static", "Color RGB", WS_VISIBLE | WS_CHILD, 80, 15, 75, 20, hwnd, NULL, NULL, NULL);
-      HWNDMas[1] = CreateWindow("static", "R", WS_VISIBLE | WS_CHILD, 50, 40, 12, 15, hwnd, NULL, NULL, NULL);
-      HWNDMas[2] = CreateWindow("static", "G", WS_VISIBLE | WS_CHILD, 100, 40, 12, 15, hwnd, NULL, NULL, NULL);
-      HWNDMas[3] = CreateWindow("static", "B", WS_VISIBLE | WS_CHILD, 150, 40, 12, 15, hwnd, NULL, NULL, NULL);
-      HWNDMas[4] = CreateWindow("static", "Color RGB in", WS_VISIBLE | WS_CHILD, 915, 15, 90, 20, hwnd, NULL, NULL, NULL);
-      HWNDMas[5] = CreateWindow("static", "R", WS_VISIBLE | WS_CHILD, 885, 40, 12, 15, hwnd, NULL, NULL, NULL);
-      HWNDMas[6] = CreateWindow("static", "G", WS_VISIBLE | WS_CHILD, 935, 40, 12, 15, hwnd, NULL, NULL, NULL);
-      HWNDMas[7] = CreateWindow("static", "B", WS_VISIBLE | WS_CHILD, 985, 40, 12, 15, hwnd, NULL, NULL, NULL);
-      HWNDMas[8] = CreateWindow("edit", NULL, WS_VISIBLE | WS_CHILD | WS_BORDER | ES_NUMBER , 65, 38, 30, 20, hwnd, NULL, NULL, NULL);
-      HWNDMas[9] = CreateWindow("edit", NULL, WS_VISIBLE | WS_CHILD | WS_BORDER | ES_NUMBER , 115, 38, 30, 20, hwnd, NULL, NULL, NULL);
-      HWNDMas[10]= CreateWindow("edit", NULL, WS_VISIBLE | WS_CHILD | WS_BORDER | ES_NUMBER , 165, 38, 30, 20, hwnd, NULL, NULL, NULL);
-      HWNDMas[11]= CreateWindow("edit", NULL, WS_VISIBLE | WS_CHILD | WS_BORDER | ES_NUMBER , 900, 38, 30, 20, hwnd, NULL, NULL, NULL);
-      HWNDMas[12]= CreateWindow("edit", NULL, WS_VISIBLE | WS_CHILD | WS_BORDER | ES_NUMBER , 950, 38, 30, 20, hwnd, NULL, NULL, NULL);
-      HWNDMas[13]= CreateWindow("edit", NULL, WS_VISIBLE | WS_CHILD | WS_BORDER | ES_NUMBER , 1000, 38, 30, 20, hwnd, NULL, NULL, NULL);
-      HWNDMas[14] =  CreateWindow("button", "Archive", WS_VISIBLE | WS_CHILD | WS_BORDER | BS_DEFPUSHBUTTON , 430, 38, 100, 20, hwnd, (HMENU)button_id1, NULL, NULL);
-      HWNDMas[15] =  CreateWindow("button", "Clear", WS_VISIBLE | WS_CHILD | WS_BORDER | BS_DEFPUSHBUTTON , 570, 38, 100, 20, hwnd, (HMENU)button_id2, NULL, NULL);
+      refreshbuttons(hwnd);
       break;
     }
     case WM_COMMAND:
     {
         if(LOWORD(wParam) == button_id1)
         {
-          HWND hwnd1 = CreateWindow("ChildWin", "Window", WS_OVERLAPPEDWINDOW  , 700, 150, 1000, 500, hwnd, NULL, NULL, NULL);
-          ShowWindow(hwnd1, SW_SHOWNORMAL);
+          if (!opened)
+          {
+            RECT r1;
+            GetClientRect(hwnd, &r1);
+            HWND hwnd1 = CreateWindow("ChildWin", "Window", WS_OVERLAPPEDWINDOW & ~WS_THICKFRAME & ~WS_MAXIMIZEBOX, 700, 150, 1100, 720, hwnd, NULL, NULL, NULL);
+            ShowWindow(hwnd1, SW_SHOWNORMAL);
+            opened = TRUE;
+          }
         }
         else if(LOWORD(wParam) == button_id2)
         {
@@ -617,13 +614,27 @@ LRESULT CALLBACK WndProcChild(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
             minY=y1;
           }
         }
-        POINT ptPoints[ArchiveMas[Ind].size+1];
-        for(int a=0;a<ArchiveMas[Ind].size+1;a++)
+        RECT r1;
+        GetClientRect(hwnd, &r1);
+        float scaling_width = ((float)(r1.right-400))/((float)1100);
+        float scaling_height = ((float)(r1.bottom))/((float)720);
+        struct MainPoly Tmp = ArchiveMas[Ind];
+        for (int zxc = 0; zxc < Tmp.size+1; zxc++)
         {
-          ptPoints[a].x=ArchiveMas[Ind].MassCor[a].xy.x-minX+400;
-          ptPoints[a].y=ArchiveMas[Ind].MassCor[a].xy.y-minY+100;
+          Tmp.MassCor[zxc]=ArchiveMas[Ind].MassCor[zxc];
+          Tmp.MassCor[zxc].xy.x=scaling_width*(Tmp.MassCor[zxc].xy.x)+331;
+          Tmp.MassCor[zxc].xy.y=scaling_height*(Tmp.MassCor[zxc].xy.y);
+          Tmp.MassCor[zxc].x1y1.x=scaling_width*(Tmp.MassCor[zxc].x1y1.x)+331;
+          Tmp.MassCor[zxc].x1y1.y=scaling_height*(Tmp.MassCor[zxc].x1y1.y);
+        }
+        POINT ptPoints[Tmp.size+1];
+        for(int a=0;a<Tmp.size+1;a++)
+        {
+          ptPoints[a].x=Tmp.MassCor[a].xy.x;
+          ptPoints[a].y=Tmp.MassCor[a].xy.y;
         }
         Polygon(hdc, ptPoints,sizeof ptPoints / sizeof ptPoints[0]);
+
       }
       EndPaint(hwnd,&ps);
       break;
@@ -710,6 +721,7 @@ LRESULT CALLBACK WndProcChild(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
     case WM_CLOSE:
     {
       Entry=FALSE;
+      opened = FALSE;
       DestroyWindow(hwnd);
       break;
     }
@@ -717,4 +729,32 @@ LRESULT CALLBACK WndProcChild(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
       return DefWindowProcA(hwnd, msg, wParam, lParam);
   }
   return DefWindowProcA(hwnd, msg, wParam, lParam);
+}
+
+void refreshbuttons(HWND hwnd)
+{
+  RECT r1;
+      GetClientRect(hwnd, &r1);
+      float scaling_width = ((float)(r1.right))/((float)1100);
+      float scaling_height = ((float)(r1.bottom))/((float)720);
+      for (int asd = 0; asd < 16; asd++)
+      {
+        DestroyWindow(HWNDMas[asd]);
+      }
+      HWNDMas[0] = CreateWindow("static", "Color RGB", WS_VISIBLE | WS_CHILD, scaling_width*80, 15, 75, 20, hwnd, NULL, NULL, NULL);
+      HWNDMas[1] = CreateWindow("static", "R", WS_VISIBLE | WS_CHILD, scaling_width*50, 40, 12, 15, hwnd, NULL, NULL, NULL);
+      HWNDMas[2] = CreateWindow("static", "G", WS_VISIBLE | WS_CHILD, scaling_width*100, 40, 12, 15, hwnd, NULL, NULL, NULL);
+      HWNDMas[3] = CreateWindow("static", "B", WS_VISIBLE | WS_CHILD, scaling_width*150, 40, 12, 15, hwnd, NULL, NULL, NULL);
+      HWNDMas[4] = CreateWindow("static", "Color RGB in", WS_VISIBLE | WS_CHILD, scaling_width*915, 15, 90, 20, hwnd, NULL, NULL, NULL);
+      HWNDMas[5] = CreateWindow("static", "R", WS_VISIBLE | WS_CHILD, scaling_width*885, 40, 12, 15, hwnd, NULL, NULL, NULL);
+      HWNDMas[6] = CreateWindow("static", "G", WS_VISIBLE | WS_CHILD, scaling_width*935, 40, 12, 15, hwnd, NULL, NULL, NULL);
+      HWNDMas[7] = CreateWindow("static", "B", WS_VISIBLE | WS_CHILD, scaling_width*985, 40, 12, 15, hwnd, NULL, NULL, NULL);
+      HWNDMas[8] = CreateWindow("edit", NULL, WS_VISIBLE | WS_CHILD | WS_BORDER | ES_NUMBER , scaling_width*65, 38, 30, 20, hwnd, NULL, NULL, NULL);
+      HWNDMas[9] = CreateWindow("edit", NULL, WS_VISIBLE | WS_CHILD | WS_BORDER | ES_NUMBER , scaling_width*115, 38, 30, 20, hwnd, NULL, NULL, NULL);
+      HWNDMas[10]= CreateWindow("edit", NULL, WS_VISIBLE | WS_CHILD | WS_BORDER | ES_NUMBER , scaling_width*165, 38, 30, 20, hwnd, NULL, NULL, NULL);
+      HWNDMas[11]= CreateWindow("edit", NULL, WS_VISIBLE | WS_CHILD | WS_BORDER | ES_NUMBER , scaling_width*900, 38, 30, 20, hwnd, NULL, NULL, NULL);
+      HWNDMas[12]= CreateWindow("edit", NULL, WS_VISIBLE | WS_CHILD | WS_BORDER | ES_NUMBER , scaling_width*950, 38, 30, 20, hwnd, NULL, NULL, NULL);
+      HWNDMas[13]= CreateWindow("edit", NULL, WS_VISIBLE | WS_CHILD | WS_BORDER | ES_NUMBER , scaling_width*1000, 38, 30, 20, hwnd, NULL, NULL, NULL);
+      HWNDMas[14] =  CreateWindow("button", "Archive", WS_VISIBLE | WS_CHILD | WS_BORDER | BS_DEFPUSHBUTTON , scaling_width*430, 38, 100, 20, hwnd, (HMENU)button_id1, NULL, NULL);
+      HWNDMas[15] =  CreateWindow("button", "Clear", WS_VISIBLE | WS_CHILD | WS_BORDER | BS_DEFPUSHBUTTON , scaling_width*570, 38, 100, 20, hwnd, (HMENU)button_id2, NULL, NULL);
 }
