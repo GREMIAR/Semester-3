@@ -8,9 +8,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);
 #define Bt1 1
 #define Bt2 2
 #define Bt3 3
-#define Bt4 4
-#define Bt5 5
-#define St 6
+#define St 4
 
 HANDLE threads;
 
@@ -42,8 +40,6 @@ int NumberShipsPlayer=0;
 HWND del;
 HWND confirm1;
 BOOL ConfirmShip=FALSE;
-HWND FirstThread;
-HWND SecondThread;
 void RegClass(WNDPROC,LPCTSTR);
 void Buum(HDC hdc,int One,int Two);
 void Miss(HDC hdc,int One,int Two);
@@ -111,8 +107,6 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
             CreateWindow("static", "   A      B      C      D      E      F      G      H      I      J   ", WS_VISIBLE | WS_CHILD| WS_BORDER, 450, 30, 330, 20, hwnd, NULL, NULL, NULL);
             CreateWindow("static", "You", WS_VISIBLE | WS_CHILD| WS_BORDER, 230, 5, 28, 20, hwnd, NULL, NULL, NULL);
             CreateWindow("static", "BOT - Optimized queue", WS_VISIBLE | WS_CHILD| WS_BORDER, 540, 5, 155, 20, hwnd, NULL, NULL, NULL);
-            FirstThread = CreateWindow("button", "Play the animation", WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON,20, 535, 160, 30, hwnd, (HMENU)Bt4, NULL, NULL);
-            SecondThread = CreateWindow("button", "Play a running line", WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON,690, 535, 160, 30, hwnd, (HMENU)Bt5, NULL, NULL);
             HWND hStatus=CreateStatusWindow(WS_CHILD | WS_VISIBLE, NULL ,hwnd, St);
             SetWindowLongPtr(hwnd, GWLP_USERDATA,(LONG_PTR)hStatus);
             break;
@@ -166,25 +160,6 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
                     SetWindowText(MainTextInfo,"Confirm put in more ships");
                 }
             }
-            else if (LOWORD(wParam)==Bt4)
-            {
-                /*TCHAR textBut[1024];
-                SendMessage(FirstThread,WM_GETTEXT,1024,textBut);
-                if(textBut=="Play the animation")
-                {
-                    SetWindowText(FirstThread,"Stop the animation");
-                }
-                else
-                {
-                    SetWindowText(FirstThread,textBut);
-                }*/
-               // HANDLE thread = CreateThread(NULL,0,thread1,NULL, 0, NULL);
-            }
-            else if (LOWORD(wParam)==Bt5)
-            {
-                //SetWindowText(SecondThread,"Stop a running line");
-            }
-            break;
         }
         case WM_LBUTTONDOWN:
         {
