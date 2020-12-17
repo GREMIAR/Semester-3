@@ -25,7 +25,6 @@ struct MainPoly
 };
 BOOL DefaultS=FALSE;
 BOOL Entry=FALSE;
-int amount;
 HWND hwndMain;
 int Ind;
 struct MainPoly MainMas[100];
@@ -554,7 +553,7 @@ LRESULT CALLBACK WndProcChild(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
     case WM_CREATE:
     {
       char str[11],str1[11];
-      ListBox = CreateWindow("listbox", NULL,WS_CHILD | WS_VISIBLE | LBS_STANDARD |LBS_WANTKEYBOARDINPUT,30, 20, 300, 400,hwnd, (HMENU) list_id, NULL, NULL);
+      ListBox = CreateWindow("listbox", NULL,WS_CHILD | WS_VISIBLE | LBS_STANDARD |LBS_WANTKEYBOARDINPUT,20, 20, 250, 630,hwnd, (HMENU) list_id, NULL, NULL);
       for(int i=0;i<Archivesize;i++)
       {
         strcpy(str1,"Figure-");
@@ -562,7 +561,6 @@ LRESULT CALLBACK WndProcChild(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
         strcat(str1, str);
         SendMessage(ListBox, LB_ADDSTRING, NULL, str1);
       }
-      amount = SendMessage(ListBox, LB_GETCOUNT, NULL,NULL);
       SetFocus(ListBox);
       if(Archivesize>0)
       {
@@ -597,22 +595,6 @@ LRESULT CALLBACK WndProcChild(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
           int x1= ArchiveMas[Ind].MassCor[a].x1y1.x;
           int y = ArchiveMas[Ind].MassCor[a].xy.x;
           int y1= ArchiveMas[Ind].MassCor[a].x1y1.y;
-          if (x<minX)
-          {
-            minX=x;
-          }
-          if (x1<minX)
-          {
-            minX=x1;
-          }
-          if (y<minY)
-          {
-            minY=y;
-          }
-          if (y1<minY)
-          {
-            minY=y1;
-          }
         }
         RECT r1;
         GetClientRect(hwnd, &r1);
@@ -622,9 +604,9 @@ LRESULT CALLBACK WndProcChild(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
         for (int zxc = 0; zxc < Tmp.size+1; zxc++)
         {
           Tmp.MassCor[zxc]=ArchiveMas[Ind].MassCor[zxc];
-          Tmp.MassCor[zxc].xy.x=scaling_width*(Tmp.MassCor[zxc].xy.x)+331;
+          Tmp.MassCor[zxc].xy.x=scaling_width*(Tmp.MassCor[zxc].xy.x)+290;
           Tmp.MassCor[zxc].xy.y=scaling_height*(Tmp.MassCor[zxc].xy.y);
-          Tmp.MassCor[zxc].x1y1.x=scaling_width*(Tmp.MassCor[zxc].x1y1.x)+331;
+          Tmp.MassCor[zxc].x1y1.x=scaling_width*(Tmp.MassCor[zxc].x1y1.x)+290;
           Tmp.MassCor[zxc].x1y1.y=scaling_height*(Tmp.MassCor[zxc].x1y1.y);
         }
         POINT ptPoints[Tmp.size+1];
@@ -643,6 +625,7 @@ LRESULT CALLBACK WndProcChild(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
     {
       if (LOWORD(wParam) == VK_UP)
       {
+        printf("%d",SendMessage(ListBox, LB_GETCOUNT, NULL,NULL));
         DefaultS=TRUE;
         Ind = SendMessage(ListBox, LB_GETCARETINDEX, NULL,NULL);
         printf("%d",Ind);
@@ -664,15 +647,19 @@ LRESULT CALLBACK WndProcChild(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
       }    
       else if  (LOWORD(wParam) == VK_DOWN)
       {
+        printf("%d",SendMessage(ListBox, LB_GETCOUNT, NULL,NULL));
         DefaultS=TRUE;
         Ind = SendMessage(ListBox, LB_GETCARETINDEX, NULL,NULL);
-        if (Entry&&amount>Ind+1)
+        if (Entry)
         {
-          Ind++;
-        }
-        else
-        {
-          MessageBox(hwnd,"You didn't get anywhere","Error", MB_OK|MB_APPLMODAL);
+          if (SendMessage(ListBox, LB_GETCOUNT, NULL,NULL)>Ind+1)
+          {
+            Ind++;
+          }
+          else
+          {
+            MessageBox(hwnd,"You didn't get anywhere","Error", MB_OK|MB_APPLMODAL);
+          }
         }
         Entry=TRUE;
         RECT rcClientRect;
