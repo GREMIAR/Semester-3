@@ -7,8 +7,7 @@ LRESULT CALLBACK WndProcChild(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 
 #define button_id1 1
 #define button_id2 2
-#define button_id3 3
-#define list_id 4
+#define list_id 3
 struct saveCor
 {
   POINT xy;
@@ -559,7 +558,6 @@ LRESULT CALLBACK WndProcChild(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
     {
       char str[11],str1[11];
       ListBox = CreateWindow("listbox", NULL,WS_CHILD | WS_VISIBLE | LBS_STANDARD |LBS_WANTKEYBOARDINPUT,30, 20, 300, 400,hwnd, (HMENU) list_id, NULL, NULL);
-      HWND DRAW_btn =  CreateWindow("button", "DRAW", WS_VISIBLE | WS_CHILD | WS_BORDER | BS_DEFPUSHBUTTON , 130, 425, 100, 20, hwnd, (HMENU)button_id3, NULL, NULL);
       for(int i=0;i<Archivesize;i++)
       {
         strcpy(str1,"Figure-");
@@ -569,6 +567,15 @@ LRESULT CALLBACK WndProcChild(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
       }
       amount = SendMessage(ListBox, LB_GETCOUNT, NULL,NULL);
       SetFocus(ListBox);
+      if(Archivesize>0)
+      {
+        DefaultS=TRUE;
+        RECT rcClientRect;
+        GetClientRect(hwnd, &rcClientRect);
+        rcClientRect.left=335;
+        InvalidateRect(hwnd,&rcClientRect,1);
+        SetFocus(ListBox);
+      }
       break;
     }
     case WM_PAINT:
@@ -621,9 +628,49 @@ LRESULT CALLBACK WndProcChild(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
       EndPaint(hwnd,&ps);
       break;
     }
-    case WM_COMMAND:
+    case WM_VKEYTOITEM:
     {
-      if (LOWORD(wParam)==button_id3)
+      if (LOWORD(wParam) == VK_UP)
+      {
+        DefaultS=TRUE;
+        Ind = SendMessage(ListBox, LB_GETCARETINDEX, NULL,NULL);
+        printf("%d",Ind);
+        if (Ind>0)
+        {
+          Ind--;
+
+        }
+        else
+        {
+          MessageBox(hwnd,"You didn't get anywhere","Error", MB_OK|MB_APPLMODAL);
+        }
+        Entry=TRUE;
+        RECT rcClientRect;
+        GetClientRect(hwnd, &rcClientRect);
+        rcClientRect.left=335;
+        InvalidateRect(hwnd,&rcClientRect,1);
+        SetFocus(ListBox);
+      }    
+      else if  (LOWORD(wParam) == VK_DOWN)
+      {
+        DefaultS=TRUE;
+        Ind = SendMessage(ListBox, LB_GETCARETINDEX, NULL,NULL);
+        if (Entry&&amount>Ind+1)
+        {
+          Ind++;
+        }
+        else
+        {
+          MessageBox(hwnd,"You didn't get anywhere","Error", MB_OK|MB_APPLMODAL);
+        }
+        Entry=TRUE;
+        RECT rcClientRect;
+        GetClientRect(hwnd, &rcClientRect);
+        rcClientRect.left=335;
+        InvalidateRect(hwnd,&rcClientRect,1);
+        SetFocus(ListBox);
+      } 
+      else if(LOWORD(wParam) ==VK_RETURN)
       {
         HDC hdc = GetDC (hwndMain);
         POINT ptPoints[ArchiveMas[Ind].size+1];
@@ -648,43 +695,7 @@ LRESULT CALLBACK WndProcChild(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
         rcClientRect.top=60;
         InvalidateRect(hwndMain,&rcClientRect,1);
         SetFocus(ListBox);
-      }
-      break;
-    }
-    case WM_VKEYTOITEM:
-    {
-      if (LOWORD(wParam) == VK_UP)
-      {
-        DefaultS=TRUE;
-        Ind = SendMessage(ListBox, LB_GETCARETINDEX, NULL,NULL);
-        if (Ind>0)
-        {
-          Ind--;
-        }
-        RECT rcClientRect;
-        GetClientRect(hwnd, &rcClientRect);
-        rcClientRect.left=335;
-        InvalidateRect(hwnd,&rcClientRect,1);
-        SetFocus(ListBox);
-      }    
-      else if  (LOWORD(wParam) == VK_DOWN)
-      {
-        DefaultS=TRUE;
-        Ind = SendMessage(ListBox, LB_GETCARETINDEX, NULL,NULL);
-        if (Entry&&amount>Ind+1)
-        {
-          Ind++;
-        }
-        else
-        {
-          Entry=TRUE;
-        }
-        RECT rcClientRect;
-        GetClientRect(hwnd, &rcClientRect);
-        rcClientRect.left=335;
-        InvalidateRect(hwnd,&rcClientRect,1);
-        SetFocus(ListBox);
-      }    
+      }   
       break;
     }
     case WM_MOVE:
