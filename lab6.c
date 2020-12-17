@@ -5,6 +5,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);
 LRESULT CALLBACK WndProcChild(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
 
+
 #define button_id1 1
 #define button_id2 2
 #define list_id 3
@@ -35,8 +36,8 @@ HBRUSH brush;
 int Mainsize;
 int Archivesize;
 HWND HWNDMas[16];
-BOOL opened = FALSE;
 void Drawer(HDC hdc,COLORREF GetColor, int f);
+void Drawer2(HDC hdc, COLORREF GetColor, struct MainPoly tmp);
 void FreeTool();
 void DrawLine(HDC hdc,POINT coor[2]);
 void updateColor(HDC hdc,COLORREF Color,COLORREF ColorIn);
@@ -104,7 +105,7 @@ enum stateDraw Condition;
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
 {
   RegClass(WndProc,"MainWin");
-  hwndMain = CreateWindow("MainWin", "Paint", WS_OVERLAPPEDWINDOW & ~WS_THICKFRAME & ~WS_MAXIMIZEBOX, 40, 40, 1100, 720, NULL, NULL, NULL, NULL);
+  hwndMain = CreateWindow("MainWin", "Paint", WS_OVERLAPPEDWINDOW & ~WS_THICKFRAME & ~WS_MAXIMIZEBOX, 0, 0, 1100, 1040, NULL, NULL, NULL, NULL);
   ShowWindow(hwndMain, SW_SHOWNORMAL);
   MSG msg;
   while (GetMessage(&msg, NULL, 0, 0))
@@ -145,14 +146,10 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
     {
         if(LOWORD(wParam) == button_id1)
         {
-          if (!opened)
-          {
-            RECT r1;
-            GetClientRect(hwnd, &r1);
-            HWND hwnd1 = CreateWindow("ChildWin", "Window", WS_OVERLAPPEDWINDOW & ~WS_THICKFRAME & ~WS_MAXIMIZEBOX, 700, 150, 1100, 720, hwnd, NULL, NULL, NULL);
-            ShowWindow(hwnd1, SW_SHOWNORMAL);
-            opened = TRUE;
-          }
+          RECT r1;
+          GetClientRect(hwnd, &r1);
+          HWND hwnd1 = CreateWindow("ChildWin", "Window", WS_OVERLAPPEDWINDOW & ~WS_THICKFRAME & ~WS_MAXIMIZEBOX, 1100, 0, 820, 1040, hwnd, NULL, NULL, NULL);
+          ShowWindow(hwnd1, SW_SHOWNORMAL);
         }
         else if(LOWORD(wParam) == button_id2)
         {
@@ -171,6 +168,13 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
           InvalidateRect(hwnd,NULL,1);
         }
         break;
+    }
+    case WM_SYSCOMMAND:
+    {
+      if (wParam == 0xF012)
+      {
+        return 0;
+      }
     }
     case WM_LBUTTONDOWN:
     { 
@@ -333,7 +337,8 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
               MainMas[f].colorIn=GetColorIn();
               Object=7;
               MoveConditionInd(Object);
-              Drawer(hdc,MainMas[f].colorIn,f);
+              //Drawer(hdc,MainMas[f].colorIn,f);
+              Drawer2(hdc, MainMas[f].colorIn, MainMas[f]);
               DeleteObject(hdc);
               ArchiveMas[Archivesize]=MainMas[f];
               Archivesize++;
@@ -540,6 +545,61 @@ void Drawer(HDC hdc,COLORREF GetColor, int f)
   }
 }
 
+void Drawer2(HDC hdc, COLORREF GetColor, struct MainPoly tmp)
+{
+  for (int dfg = 0; dfg < tmp.size+1; dfg++)
+  {
+    MoveToEx(hdc, tmp.MassCor[dfg].xy.x, tmp.MassCor[dfg].xy.y, NULL);
+    LineTo(hdc, tmp.MassCor[dfg].x1y1.x, tmp.MassCor[dfg].x1y1.y);
+  }
+  int left = tmp.MassCor[0].xy.x;
+  int right = tmp.MassCor[0].xy.x;
+  int top = tmp.MassCor[0].xy.y;
+  int bot = tmp.MassCor[0].xy.y;
+  for (int i=0; i <= tmp.size; i++)
+  {
+    if (tmp.MassCor[i].xy.x < left) left = tmp.MassCor[i].xy.x;
+    else if (tmp.MassCor[i].xy.x > right) right = tmp.MassCor[i].xy.x;
+    if (tmp.MassCor[i].xy.y < top) top = tmp.MassCor[i].xy.y;
+    else if (tmp.MassCor[i].xy.y > bot) bot = tmp.MassCor[i].xy.y;
+  }
+  POINT c[4];
+  left++;
+  top++;
+  c[0].x=left;
+  c[0].y=top;
+  c[1].x=left;
+  c[1].y=0;
+  int colper;
+  for (int i1 = left; i1 < right; i1++)
+  {
+    c[0].x=i1;
+    for (int j1 = top; j1 < bot; j1++)
+    {
+      colper=0;
+      c[0].y=j1;
+      for(int i=0;i<tmp.size+1;i++)
+      {
+        c[2]=tmp.MassCor[i].xy;
+        c[3]=tmp.MassCor[i].x1y1;
+        if(intersection(c))
+        {
+          colper+=1;
+        }
+      }
+      if (colper%2!=0) 
+      {
+        SetPixel(hdc, i1, j1, GetColor);
+      }
+    }
+  }
+  for (int dfg = 0; dfg < tmp.size+1; dfg++)
+  {
+    MoveToEx(hdc, tmp.MassCor[dfg].xy.x, tmp.MassCor[dfg].xy.y, NULL);
+    LineTo(hdc, tmp.MassCor[dfg].x1y1.x, tmp.MassCor[dfg].x1y1.y);
+  }
+}
+
 void MoveConditionInd(int Obj)
 {
   ConditionInd = TableMove[Obj][ConditionInd];
@@ -552,6 +612,7 @@ LRESULT CALLBACK WndProcChild(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
   {
     case WM_CREATE:
     {
+      EnableWindow(hwndMain, FALSE);
       char str[11],str1[11];
       ListBox = CreateWindow("listbox", NULL,WS_CHILD | WS_VISIBLE | LBS_STANDARD |LBS_WANTKEYBOARDINPUT,20, 20, 250, 630,hwnd, (HMENU) list_id, NULL, NULL);
       for(int i=0;i<Archivesize;i++)
@@ -567,20 +628,31 @@ LRESULT CALLBACK WndProcChild(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
         DefaultS=TRUE;
         RECT rcClientRect;
         GetClientRect(hwnd, &rcClientRect);
-        rcClientRect.left=335;
+        rcClientRect.left=300;
         InvalidateRect(hwnd,&rcClientRect,1);
         SetFocus(ListBox);
       }
       break;
+    }
+    case WM_SYSCOMMAND:
+    {
+      if (wParam == 0xF012)
+      {
+        return 0;
+      }
     }
     case WM_PAINT:
     {
       PAINTSTRUCT ps;
       HDC hdc = BeginPaint(hwnd,&ps);
       FillRect(hdc,&ps.rcPaint,(HBRUSH)(COLOR_WINDOW + 23));
+      RECT r2;
+      GetClientRect(hwnd, &r2);
+      r2.right = 290;
+      HBRUSH greenBrush = CreateSolidBrush(RGB(50,50,100));
+      FillRect(hdc,&r2,greenBrush);
       if (DefaultS)
       {
-        int minX=1100,minY=720;
         if(ArchiveMas[Ind].DRAW==FALSE)
         {
           updateColor(hdc,ArchiveMas[Ind].color,RGB(185,209,234));
@@ -598,24 +670,18 @@ LRESULT CALLBACK WndProcChild(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
         }
         RECT r1;
         GetClientRect(hwnd, &r1);
-        float scaling_width = ((float)(r1.right-400))/((float)1100);
-        float scaling_height = ((float)(r1.bottom))/((float)720);
+        float scaling_width = ((float)(r1.right-300))/((float)1100);
+        float scaling_height = ((float)(r1.bottom))/((float)1040);
         struct MainPoly Tmp = ArchiveMas[Ind];
         for (int zxc = 0; zxc < Tmp.size+1; zxc++)
         {
           Tmp.MassCor[zxc]=ArchiveMas[Ind].MassCor[zxc];
-          Tmp.MassCor[zxc].xy.x=scaling_width*(Tmp.MassCor[zxc].xy.x)+290;
+          Tmp.MassCor[zxc].xy.x=scaling_width*(Tmp.MassCor[zxc].xy.x)+300;
           Tmp.MassCor[zxc].xy.y=scaling_height*(Tmp.MassCor[zxc].xy.y);
-          Tmp.MassCor[zxc].x1y1.x=scaling_width*(Tmp.MassCor[zxc].x1y1.x)+290;
+          Tmp.MassCor[zxc].x1y1.x=scaling_width*(Tmp.MassCor[zxc].x1y1.x)+300;
           Tmp.MassCor[zxc].x1y1.y=scaling_height*(Tmp.MassCor[zxc].x1y1.y);
         }
-        POINT ptPoints[Tmp.size+1];
-        for(int a=0;a<Tmp.size+1;a++)
-        {
-          ptPoints[a].x=Tmp.MassCor[a].xy.x;
-          ptPoints[a].y=Tmp.MassCor[a].xy.y;
-        }
-        Polygon(hdc, ptPoints,sizeof ptPoints / sizeof ptPoints[0]);
+        Drawer2(hdc, Tmp.colorIn, Tmp);
 
       }
       EndPaint(hwnd,&ps);
@@ -623,7 +689,14 @@ LRESULT CALLBACK WndProcChild(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
     }
     case WM_VKEYTOITEM:
     {
-      if (LOWORD(wParam) == VK_UP)
+      if (wParam==VK_ESCAPE)
+      {
+        EnableWindow(hwndMain, TRUE);
+        Entry=FALSE;
+        DestroyWindow(hwnd);
+        break;
+      }
+      else if (LOWORD(wParam) == VK_UP)
       {
         printf("%d",SendMessage(ListBox, LB_GETCOUNT, NULL,NULL));
         DefaultS=TRUE;
@@ -641,7 +714,7 @@ LRESULT CALLBACK WndProcChild(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
         Entry=TRUE;
         RECT rcClientRect;
         GetClientRect(hwnd, &rcClientRect);
-        rcClientRect.left=335;
+        rcClientRect.left=300;
         InvalidateRect(hwnd,&rcClientRect,1);
         SetFocus(ListBox);
       }    
@@ -664,7 +737,7 @@ LRESULT CALLBACK WndProcChild(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
         Entry=TRUE;
         RECT rcClientRect;
         GetClientRect(hwnd, &rcClientRect);
-        rcClientRect.left=335;
+        rcClientRect.left=300;
         InvalidateRect(hwnd,&rcClientRect,1);
         SetFocus(ListBox);
       } 
@@ -685,7 +758,9 @@ LRESULT CALLBACK WndProcChild(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
         {
           updateColor(hdc,ArchiveMas[Ind].color,ArchiveMas[Ind].colorIn);
         }
-        Polygon(hdc, ptPoints,sizeof ptPoints / sizeof ptPoints[0]);
+        struct MainPoly tmp = ArchiveMas[Ind];
+        Drawer2(hdc,ArchiveMas[Ind].colorIn,tmp);
+
         MainMas[Mainsize]=ArchiveMas[Ind];
         Mainsize++;
         RECT rcClientRect;
@@ -698,17 +773,13 @@ LRESULT CALLBACK WndProcChild(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
     }
     case WM_MOVE:
     {
-      RECT rcClientRect;
-      GetClientRect(hwnd, &rcClientRect);
-      rcClientRect.top=60;
-      InvalidateRect(hwndMain,&rcClientRect,1);
       SetFocus(ListBox);
-      break;
+      return 0;
     }
     case WM_CLOSE:
     {
+      EnableWindow(hwndMain, TRUE);
       Entry=FALSE;
-      opened = FALSE;
       DestroyWindow(hwnd);
       break;
     }
@@ -723,7 +794,7 @@ void refreshbuttons(HWND hwnd)
   RECT r1;
       GetClientRect(hwnd, &r1);
       float scaling_width = ((float)(r1.right))/((float)1100);
-      float scaling_height = ((float)(r1.bottom))/((float)720);
+      float scaling_height = ((float)(r1.bottom))/((float)1040);
       for (int asd = 0; asd < 16; asd++)
       {
         DestroyWindow(HWNDMas[asd]);
