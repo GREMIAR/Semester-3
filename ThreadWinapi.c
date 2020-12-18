@@ -116,7 +116,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
             {
               GetObject(bitMap, sizeof(bm), &bm);
               SelectObject(memDC, bitMap);
-              BitBlt(hdc, 200, 200, bm.bmWidth, bm.bmHeight, memDC, 0, 0, SRCCOPY);
+              BitBlt(hdc, 50, 50, bm.bmWidth, bm.bmHeight, memDC, 0, 0, SRCCOPY);
             }
             DeleteDC(memDC);
             EndPaint(hwnd, &ps);
@@ -224,6 +224,7 @@ DWORD WINAPI AnimationThread(LPVOID data){
   while(TRUE)
   {
     Sleep(300);
+    printf("%d",StatesImage);
     switch(StatesImage){
     case 0:
       bitMap = (HBITMAP)LoadImage(NULL, ".\\Gif\\0.bmp", IMAGE_BITMAP, 0, 0, LR_LOADFROMFILE);
@@ -242,7 +243,8 @@ DWORD WINAPI AnimationThread(LPVOID data){
       break;
     } 
     StatesImage++;
-    if(StatesImage = 5)
+    if(StatesImage == 5)
       StatesImage = 0;
+    InvalidateRect(hwndMain,NULL,0);
   }
 }
