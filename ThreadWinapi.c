@@ -9,11 +9,21 @@
 HBITMAP bitMap;
 LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
+
+enum Cond
+{
+  Start, On_On, Off_On, Off_Off, On_Off, Exit
+}Condition_Gif_Text;
+enum Button_P
+{
+  Gifka, Textiq, Quit
+}Button_Pressed;
+
+
 void ChangeThreads(int i);
 struct Threads
 {
   HANDLE Thread;
-  BOOL Condition;
   HWND hwndB;
 };
 struct Threads ThreadMas[2];
@@ -51,12 +61,11 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
     {
         case WM_CREATE:
         {
+          Condition_Gif_Text=Start;
+          Transition();
+
           ThreadMas[0].hwndB = CreateWindow("button", "Stop the running line", WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON,20, 535, 160, 30, hwnd, (HMENU)Bt1, NULL, NULL);
           ThreadMas[1].hwndB = CreateWindow("button", "Stop the animation", WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON,690, 535, 160, 30, hwnd, (HMENU)Bt2, NULL, NULL);
-          ThreadMas[0].Thread = CreateThread(NULL, 0, LineThread, NULL, 0, NULL);
-          ThreadMas[1].Thread = CreateThread(NULL, 0, AnimationThread, NULL, 0, NULL);
-          ThreadMas[0].Condition=TRUE;
-          ThreadMas[1].Condition=TRUE;
           HWND hStatus=CreateStatusWindow(WS_CHILD | WS_VISIBLE, "HAPPY NEW YEAR" ,hwnd, St);
           bitMap = NULL;
           break;
@@ -65,24 +74,26 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
         {
           if(LOWORD(wParam)==Bt1)
           { 
-            ChangeThreads(0);
-            if(ThreadMas[0].Condition)
+            Button_Pressed=Textiq;
+            Transition();
+            if(Condition_Gif_Text==On_On||Condition_Gif_Text==Off_On)
             {
               SetWindowText(ThreadMas[0].hwndB,"Stop the running line");
             }
-            else
+            else if (Condition_Gif_Text==On_Off||Condition_Gif_Text==Off_Off)
             {
               SetWindowText(ThreadMas[0].hwndB,"Play the running line");
             }
           }
           else if (LOWORD(wParam)==Bt2)
           {
-            ChangeThreads(1);
-            if(ThreadMas[1].Condition)
+            Button_Pressed=Gifka;
+            Transition();
+            if(Condition_Gif_Text==On_Off||Condition_Gif_Text==On_On)
             {
               SetWindowText(ThreadMas[1].hwndB,"Stop the animation");
             }
-            else
+            else if (Condition_Gif_Text==Off_On||Condition_Gif_Text==Off_Off)
             {
               SetWindowText(ThreadMas[1].hwndB,"Play the animation");
             }
@@ -108,9 +119,12 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
         }
         case WM_DESTROY:
         {
+          if (Condition_Gif_Text==Exit)
+          {
           CloseHandle(ThreadMas[0].Thread);
           CloseHandle(ThreadMas[1].Thread);
           PostQuitMessage(0);
+          }
         }
         default:
         return DefWindowProcA(hwnd, msg, wParam, lParam);
@@ -118,29 +132,99 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
     return DefWindowProcA(hwnd, msg, wParam, lParam);
 }
 
-void ChangeThreads(int i)
+void Transition()
 {
-  if(ThreadMas[i].Condition)
+  if (Condition_Gif_Text==Start)
   {
-    SuspendThread(ThreadMas[i].Thread);
-    ThreadMas[i].Condition=FALSE;
+    ThreadMas[0].Thread = CreateThread(NULL, 0, AnimationThread, NULL, 0, NULL);
+    ThreadMas[1].Thread = CreateThread(NULL, 0, LineThread, NULL, 0, NULL);
+    Condition_Gif_Text=On_On;
   }
-  else
+  else if (Condition_Gif_Text==On_On&&Button_Pressed==Textiq)
   {
-    ResumeThread(ThreadMas[i].Thread);
-    ThreadMas[i].Condition=TRUE;
+    //ResumeThread(ThreadMas[0].Thread);
+    SuspendThread(ThreadMas[1].Thread);
+    Condition_Gif_Text=On_Off;
   }
-  
+  else if (Condition_Gif_Text==On_On&&Button_Pressed==Gifka)
+  {
+    SuspendThread(ThreadMas[0].Thread);
+    //ResumeThread(ThreadMas[1].Thread);
+    Condition_Gif_Text=Off_On;
+  }
+  else if (Condition_Gif_Text==On_On&&Button_Pressed==Quit)
+  {
+    CloseHandle(ThreadMas[0].Thread);
+    CloseHandle(ThreadMas[1].Thread);
+    Condition_Gif_Text=Exit;
+  }
+  else if (Condition_Gif_Text==Off_On&&Button_Pressed==Textiq)
+  {
+    //SuspendThread(ThreadMas[0].Thread);
+    SuspendThread(ThreadMas[1].Thread);
+    Condition_Gif_Text=Off_Off;
+  }
+  else if (Condition_Gif_Text==Off_On&&Button_Pressed==Gifka)
+  {
+    ResumeThread(ThreadMas[0].Thread);
+    //ResumeThread(ThreadMas[1].Thread);
+    Condition_Gif_Text=On_On;
+  }
+  else if (Condition_Gif_Text==Off_On&&Button_Pressed==Quit)
+  {
+    CloseHandle(ThreadMas[0].Thread);
+    CloseHandle(ThreadMas[1].Thread);
+    Condition_Gif_Text=Exit;
+  }
+  else if (Condition_Gif_Text==Off_Off&&Button_Pressed==Textiq)
+  {
+    //SuspendThread(ThreadMas[0].Thread);
+    ResumeThread(ThreadMas[1].Thread);
+    Condition_Gif_Text=Off_On;
+  }
+  else if (Condition_Gif_Text==Off_Off&&Button_Pressed==Gifka)
+  {
+    ResumeThread(ThreadMas[0].Thread);
+    //SuspendThread(ThreadMas[1].Thread);
+    Condition_Gif_Text=On_Off;
+  }
+  else if (Condition_Gif_Text==Off_Off&&Button_Pressed==Quit)
+  {
+    CloseHandle(ThreadMas[0].Thread);
+    CloseHandle(ThreadMas[1].Thread);
+    Condition_Gif_Text=Exit;
+  }
+  else if (Condition_Gif_Text==On_Off&&Button_Pressed==Textiq)
+  {
+    //ResumeThread(ThreadMas[0].Thread);
+    ResumeThread(ThreadMas[1].Thread);
+    Condition_Gif_Text=On_On;
+  }
+  else if (Condition_Gif_Text==On_Off&&Button_Pressed==Gifka)
+  {
+    SuspendThread(ThreadMas[0].Thread);
+    //SuspendThread(ThreadMas[1].Thread);
+    Condition_Gif_Text=Off_Off;
+  }
+  else if (Condition_Gif_Text==On_Off&&Button_Pressed==Quit)
+  {
+    CloseHandle(ThreadMas[0].Thread);
+    CloseHandle(ThreadMas[1].Thread);
+    Condition_Gif_Text=Exit;
+  }
+  printf("\nCondition changed to %d\n", Condition_Gif_Text);
 }
 
 DWORD WINAPI LineThread(LPVOID data){
    while(TRUE){
-     printf("!");
+     Sleep(300);
+     printf("T");
    }
 }
 
 DWORD WINAPI AnimationThread(LPVOID data){
    while(TRUE){
-     printf("?");
+     Sleep(300);
+     printf("G");
    }
 }
