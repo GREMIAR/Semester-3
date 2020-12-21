@@ -7,10 +7,6 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
 #define Bt1 1
 #define Bt2 2
-#define Bt3 3
-#define St 4
-
-HANDLE threads;
 
 enum which{
   One1,
@@ -37,9 +33,8 @@ BOOL WhoseTurn=TRUE;
 BOOL StageGame=TRUE;
 int NumberShips=20;
 int NumberShipsPlayer=0;
-HWND del;
-HWND confirm1;
-BOOL ConfirmShip=FALSE;
+HWND Del;
+HWND Start;
 void RegClass(WNDPROC,LPCTSTR);
 void Buum(HDC hdc,int One,int Two);
 void Miss(HDC hdc,int One,int Two);
@@ -89,9 +84,8 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
                     Our[i][f].Alive=TRUE;
                 }
             }
-            CreateWindow("button", "Start", WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON,375, 550, 120, 30, hwnd, (HMENU)Bt1, NULL, NULL);
-            del=CreateWindow("button", "Del", WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON,250, 390, 120, 30, hwnd, (HMENU)Bt2, NULL, NULL);
-            confirm1=CreateWindow("button", "Confirm", WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON,120, 390, 120, 30, hwnd, (HMENU)Bt3, NULL, NULL);
+            Start=CreateWindow("button", "Start", WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON,375, 550, 120, 30, hwnd, (HMENU)Bt1, NULL, NULL);
+            Del=CreateWindow("button", "Del", WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON,185, 390, 120, 30, hwnd, (HMENU)Bt2, NULL, NULL);
             CreateWindow("static", "   A      B      C      D      E      F      G      H      I      J   ", WS_VISIBLE | WS_CHILD| WS_BORDER, 80, 30, 330, 20, hwnd, NULL, NULL, NULL);
             CreateWindow("static", NULL, WS_VISIBLE | WS_CHILD| WS_BORDER, 61, 49, 20, 330, hwnd, NULL, NULL, NULL);
             CreateWindow("static", NULL, WS_VISIBLE | WS_CHILD| WS_BORDER, 431, 49, 20, 330, hwnd, NULL, NULL, NULL);
@@ -107,7 +101,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
             CreateWindow("static", "   A      B      C      D      E      F      G      H      I      J   ", WS_VISIBLE | WS_CHILD| WS_BORDER, 450, 30, 330, 20, hwnd, NULL, NULL, NULL);
             CreateWindow("static", "You", WS_VISIBLE | WS_CHILD| WS_BORDER, 230, 5, 28, 20, hwnd, NULL, NULL, NULL);
             CreateWindow("static", "BOT - Optimized queue", WS_VISIBLE | WS_CHILD| WS_BORDER, 540, 5, 155, 20, hwnd, NULL, NULL, NULL);
-            HWND hStatus=CreateStatusWindow(WS_CHILD | WS_VISIBLE, NULL ,hwnd, St);
+            HWND hStatus=CreateStatusWindow(WS_CHILD | WS_VISIBLE, NULL ,hwnd, NULL);
             SetWindowLongPtr(hwnd, GWLP_USERDATA,(LONG_PTR)hStatus);
             break;
         }
@@ -115,7 +109,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
         {
             if(LOWORD(wParam)==Bt1)
             { 
-                if(ConfirmShip)
+                if(NumberShipsPlayer==20)
                 {
                     Starting(hwnd);
                     RECT rcClientRect;
@@ -123,11 +117,13 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
                     rcClientRect.left=420;
                     InvalidateRect(hwnd,&rcClientRect,1);
                     StageGame=FALSE;
+                    ShowWindow(Start,SW_HIDE);
+                    ShowWindow(Del,SW_HIDE);
                 }
                 else
                 {
                     HWND MainTextInfo = (HWND)GetWindowLongPtr(hwnd, GWLP_USERDATA);
-                    SetWindowText(MainTextInfo,"Please confirm the ships");
+                    SetWindowText(MainTextInfo,"Set more ships");
                 }
             }
             else if (LOWORD(wParam)==Bt2)
@@ -145,20 +141,6 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
                     }
                 }
                 NumberShipsPlayer=0;
-            }
-            else if (LOWORD(wParam)==Bt3)
-            {
-                if(NumberShipsPlayer==20)
-                {
-                    ConfirmShip=TRUE;
-                    ShowWindow(confirm1,SW_HIDE);
-                    ShowWindow(del,SW_HIDE);
-                }
-                else
-                {
-                    HWND MainTextInfo = (HWND)GetWindowLongPtr(hwnd, GWLP_USERDATA);
-                    SetWindowText(MainTextInfo,"Confirm put in more ships");
-                }
             }
         }
         case WM_LBUTTONDOWN:
@@ -502,9 +484,8 @@ void Starting(HWND hwndmainw)
 void Finished()
 {
     NumberShipsPlayer=0;
-    ConfirmShip=FALSE;
-    ShowWindow(confirm1,SW_SHOW);
-    ShowWindow(del,SW_SHOW);
+    ShowWindow(Start,SW_SHOW);
+    ShowWindow(Del,SW_SHOW);
     for(int i=0;i<11;i++)
     {
         for(int f=0;f<11;f++)
