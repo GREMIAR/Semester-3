@@ -23,15 +23,16 @@ enum which{
 struct field
 {
     BOOL Empty;
-    BOOL Alive;
+    BOOL NoHit;
     enum which Who;
     int remained;
 };
+enum which fd=9;
 struct field Our[10][10];
 struct field Bot[10][10];
 BOOL WhoseTurn=TRUE;
 BOOL StageGame=TRUE;
-int NumberShips=20;
+int NumberShips=10;
 int NumberShipsPlayer=0;
 HWND Del;
 HWND Start;
@@ -81,7 +82,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
                 for(int f=0;f<11;f++)
                 {
                     Our[i][f].Empty=TRUE;
-                    Our[i][f].Alive=TRUE;
+                    Our[i][f].NoHit=TRUE;
                 }
             }
             Start=CreateWindow("button", "Start", WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON,375, 550, 120, 30, hwnd, (HMENU)Bt1, NULL, NULL);
@@ -137,7 +138,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
                     for(int f=0;f<11;f++)
                     {
                         Our[i][f].Empty=TRUE;
-                        Our[i][f].Alive=TRUE;
+                        Our[i][f].NoHit=TRUE;
                     }
                 }
                 NumberShipsPlayer=0;
@@ -160,22 +161,19 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
                     return 1;
                 }
                 WhoseTurn=FALSE;
-                if (Bot[One][Two].Empty==FALSE&&Bot[One][Two].Alive==TRUE)
+                if (!Bot[One][Two].Empty&&Bot[One][Two].NoHit)
                 {
                     HDC hdc = GetDC (hwnd);
-                    if(Bot[One][Two].Alive==TRUE)
+                    Wound(hdc,50+One*33,450+Two*33);
+                    Bot[One][Two].NoHit=FALSE;
+                    for(int i=0;i<10;i++)
                     {
-                        Wound(hdc,50+One*33,450+Two*33);
-                        Bot[One][Two].Alive=FALSE;
-                        for(int i=0;i<10;i++)
+                        for(int f=0;f<10;f++)
                         {
-                            for(int f=0;f<10;f++)
+                            if(!Bot[i][f].Empty&&Bot[i][f].Who==Bot[One][Two].Who&&Bot[i][f].remained>0)
                             {
-                                if(!Bot[i][f].Empty&&Bot[i][f].Who==Bot[One][Two].Who&&Bot[i][f].remained>0)
-                                {
-                                    Bot[i][f].remained--;
-                                    WhoseTurn=TRUE;
-                                }
+                                Bot[i][f].remained--;
+                                WhoseTurn=TRUE;
                             }
                         }
                     }
@@ -185,60 +183,63 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
                         {
                             if(!Bot[i][f].Empty&&Bot[i][f].Who==Bot[One][Two].Who&&Bot[i][f].remained==0)
                             {
-                                int test1=50+i*33;
-                                int test2=450+f*33;
+                                x=50+i*33;
+                                y=450+f*33;
                                 if(Bot[i-1][f-1].Empty&&(i-1>=0)&&(f-1>=0))
                                 {
-                                    Miss(hdc,test1-33,test2-33);
-                                    Bot[i-1][f-1].Alive=FALSE;
+                                    Miss(hdc,x-33,y-33);
+                                    Bot[i-1][f-1].NoHit=FALSE;
                                 }
                                 if(Bot[i][f-1].Empty&&(f-1>=0))
                                 {
-                                    Miss(hdc,test1,test2-33);
-                                    Bot[i][f-1].Alive=FALSE;
+                                    Miss(hdc,x,y-33);
+                                    Bot[i][f-1].NoHit=FALSE;
                                 }
                                 if(Bot[i-1][f].Empty&&(i-1>=0))
                                 {
-                                    Miss(hdc,test1-33,test2);
-                                    Bot[i-1][f].Alive=FALSE;
+                                    Miss(hdc,x-33,y);
+                                    Bot[i-1][f].NoHit=FALSE;
                                 }
                                 if(Bot[i+1][f].Empty&&(i+1<=9))
                                 {
-                                    Miss(hdc,test1+33,test2);
-                                    Bot[i+1][f].Alive=FALSE;
+                                    Miss(hdc,x+33,y);
+                                    Bot[i+1][f].NoHit=FALSE;
                                 }
                                 if(Bot[i][f+1].Empty&&(f+1<=9))
                                 {
-                                    Miss(hdc,test1,test2+33);
-                                    Bot[i][f+1].Alive=FALSE;
+                                    Miss(hdc,x,y+33);
+                                    Bot[i][f+1].NoHit=FALSE;
                                 }
                                 if(Bot[i-1][f+1].Empty&&(i-1>=0)&&(f+1<=9))
                                 {
-                                    Miss(hdc,test1-33,test2+33);
-                                    Bot[i-1][f+1].Alive=FALSE;
+                                    Miss(hdc,x-33,y+33);
+                                    Bot[i-1][f+1].NoHit=FALSE;
                                 }
                                 if(Bot[i+1][f+1].Empty&&(i+1<=9)&&(f+1<=9))
                                 {
-                                    Miss(hdc,test1+33,test2+33);
-                                    Bot[i+1][f+1].Alive=FALSE;
+                                    Miss(hdc,x+33,y+33);
+                                    Bot[i+1][f+1].NoHit=FALSE;
                                 }
                                 if(Bot[i+1][f-1].Empty&&(i+1<=9)&&(f-1>=0))
                                 {
-                                    Miss(hdc,test1+33,test2-33);
-                                    Bot[i+1][f-1].Alive=FALSE;
+                                    Miss(hdc,x+33,y-33);
+                                    Bot[i+1][f-1].NoHit=FALSE;
                                 }
-                                Buum(hdc,test1,test2);
+                                Buum(hdc,x,y);
                                 WhoseTurn=TRUE;
-                                NumberShips--;
                             }
                         }
                     }
+                    if(Bot[One][Two].remained==0)
+                    {
+                        NumberShips--;
+                    }
                     DeleteObject(hdc);
                 }
-                else if (Bot[One][Two].Empty==TRUE&&Bot[One][Two].Alive==TRUE)
+                else if (Bot[One][Two].Empty&&Bot[One][Two].NoHit)
                 {
                     HDC hdc = GetDC (hwnd);
-                    Bot[One][Two].Alive=FALSE;
+                    Bot[One][Two].NoHit=FALSE;
                     Miss(hdc,50+One*33,450+Two*33);
                     DeleteObject(hdc);
                 }  
@@ -264,21 +265,21 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
                     BOOL DoblMove=FALSE;
                     while(!DoblMove)
                     {
-                        while(Our[y][x].Alive==FALSE)
+                        while(!Our[y][x].NoHit)
                         {
                             y = rand() % (10);
                             x = rand() % (10);
                         }
-                        if(Our[y][x].Empty==FALSE)
+                        if(!Our[y][x].Empty)
                         {
                             Buum(hdc,50+y*33,80+x*33);
                             NumberShipsPlayer--;
-                            Our[y][x].Alive=FALSE;
+                            Our[y][x].NoHit=FALSE;
                         }
                         else
                         {
                             Miss(hdc,50+y*33,80+x*33);
-                            Our[y][x].Alive=FALSE;
+                            Our[y][x].NoHit=FALSE;
                             DoblMove=TRUE;
                         }
                         if(NumberShipsPlayer==0)
@@ -310,7 +311,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
                     {
                         return 1;
                     }
-                    if(Our[One][Two].Empty==TRUE)
+                    if(Our[One][Two].Empty)
                     {
                         if (cellAvailable(Our, One, Two,hwnd))
                         {
@@ -403,14 +404,14 @@ void Starting(HWND hwndmainw)
 {
     HWND MainTextInfo = (HWND)GetWindowLongPtr(hwndmainw, GWLP_USERDATA);
     SetWindowText(MainTextInfo,"Starting");
-    NumberShips=20;
+    NumberShips=10;
     StageGame=TRUE;
     for(int i=0;i<11;i++)
     {
         for(int f=0;f<11;f++)
         {
             Bot[i][f].Empty=TRUE;
-            Bot[i][f].Alive=TRUE;
+            Bot[i][f].NoHit=TRUE;
         }
     }
     Bot[0][0].Empty=FALSE;
@@ -491,7 +492,7 @@ void Finished()
         for(int f=0;f<11;f++)
         {
             Our[i][f].Empty=TRUE;
-            Our[i][f].Alive=TRUE;
+            Our[i][f].NoHit=TRUE;
         }
     }
 }
