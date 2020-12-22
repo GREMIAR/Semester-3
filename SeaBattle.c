@@ -43,6 +43,8 @@ void Wound(HDC hdc,int One,int Two);
 void DrawShip(HDC hdc,int One,int Two);
 void Starting(HWND hwndmainw);
 void Finished();
+void ClearPlayerField(HWND hwnd);
+int x1,y1;
 BOOL cellAvailable(struct field field[10][10], int one, int two,HWND hwndmainw);
 
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
@@ -311,6 +313,12 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
                     {
                         return 1;
                     }
+                    if (NumberShipsPlayer==0)
+                    {
+                        x1=50+One*33;
+                        y1=80+Two*33;
+                        ClearPlayerField(hwnd);
+                    }
                     if(Our[One][Two].Empty)
                     {
                         if (cellAvailable(Our, One, Two,hwnd))
@@ -360,6 +368,12 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
             {
                 MoveToEx(hdc, 450, i, NULL);
                 LineTo(hdc, 778, i);
+            }
+            if (NumberShipsPlayer==1)
+            {
+                HPEN pen = CreatePen(NULL, 0, RGB(0,0,0));
+                SelectObject(hdc, pen); 
+                DrawShip(hdc,x1,y1);
             }
             EndPaint(hwnd,&ps);
             break;
@@ -578,4 +592,13 @@ BOOL cellAvailable(struct field field[10][10], int one, int two,HWND hwndmainw)
     }
     SetWindowText(MainTextInfo,"Another ship is too close");
     return FALSE;
+}
+
+void ClearPlayerField(HWND hwnd)
+{
+    RECT rcClientRect;
+    GetClientRect(hwnd, &rcClientRect);
+    rcClientRect.right=420;
+    InvalidateRect(hwnd,&rcClientRect,1);
+
 }
