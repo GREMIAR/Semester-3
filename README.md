@@ -1,2 +1,1 @@
-# WINAPI-labs
-Лабораторные по WINAPI
+# 3
