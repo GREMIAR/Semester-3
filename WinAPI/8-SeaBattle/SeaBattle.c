@@ -419,10 +419,10 @@ void Starting(HWND hwndmainw)
     HWND MainTextInfo = (HWND)GetWindowLongPtr(hwndmainw, GWLP_USERDATA);
     SetWindowText(MainTextInfo,"Starting");
     NumberShips=10;
-    StageGame=TRUE;
-    for(int i=0;i<11;i++)
+    StageGame = TRUE;
+    for(int i=0;i<10;i++)
     {
-        for(int f=0;f<11;f++)
+        for(int f=0;f<10;f++)
         {
             Bot[i][f].Empty=TRUE;
             Bot[i][f].NoHit=TRUE;
